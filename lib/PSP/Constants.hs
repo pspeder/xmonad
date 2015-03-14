@@ -22,10 +22,10 @@ myFullFloats        = []
 
 -- Applications
 myTerminal :: String
-myTerminal = "urxvtc"
+myTerminal = "urxvtc -e " ++ myShell
 
 myShell :: String
-myShell = "zsh"
+myShell = "/bin/zsh"
 
 myBrowser :: String
 myBrowser = "firefox"

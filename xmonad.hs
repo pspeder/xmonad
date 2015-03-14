@@ -5,7 +5,12 @@ import XMonad.Layout.ToggleLayouts
 import XMonad.Layout.Maximize
 import XMonad.Util.EZConfig
 import XMonad.Util.Run
+import XMonad.Util.WindowProperties (Property(..))
 import XMonad.Actions.GridSelect
+import qualified XMonad.Actions.Submap as SM
+import qualified XMonad.Actions.Search as S
+import XMonad.Actions.Commands
+import XMonad.Prompt
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.UrgencyHook
@@ -34,13 +39,13 @@ myConfig = do
                                  setWMName "LG3D"
                                  return ()
         , handleEventHook   = ewmhDesktopsEventHook
-        , manageHook        = manageHook defaultConfig <+> manageDocks <+> pspNamedScratchpadManageHook <+> myManageHook [] [] [] [] [] []
+        , manageHook        = manageHook defaultConfig <+> manageDocks <+> pspNamedScratchpadManageHook <+> myManageHook [(ClassName "Gimp")] [] [] [] [] []
         , layoutHook        = myTopicLayoutHook
         , logHook           = logHook defaultConfig >> ewmhDesktopsLogHook >> myLogHook d
         }
         `removeKeysP` (
         [ "M-<Space>"       -- Originally layout toggle
-        , "M-S-<Space>"     -- 
+        , "M-S-<Space>"     --
         , "M-m"
         , "M-w"             -- First screen
         , "M-S-w"           -- Move to first screen
@@ -55,13 +60,13 @@ myConfig = do
         , "M-z"
         ] ++ [ ("M-" ++ [n]) | n <- show [1..9] ])
         `additionalKeysP` (
-        [ ("M-<Return>"             , spawn "urxvtc"                            )
-        , ("M-+"                    , spawnShell                                )
+        [ ("M-<Return>"             , spawnShell                                )
         , ("M-<Tab>"                , rotAllUp                                  )
         , ("M-S-<Tab>"              , rotAllDown                                )
         , ("M-w"                    , gridselectWorkspace defaultGSConfig W.view)
+        --, ("M-q"                    , search                                    )
+        , ("M-y"                    , commands >>= runCommand                   )
         , ("M-S-w"                  , spawn $ "notify-send " ++ show myNumberedTopics)
-        , ("M-y"                    , sinkAll                                   )
         , ("M-S-l"                  , sendMessage NextLayout                    )
         , ("M-f"                    , withFocused $ sendMessage.maximizeRestore ) -- make window full screen
         --, ("M-m"                    , windows W.focusMaster                     ) -- focus master window
@@ -125,7 +130,26 @@ myLogHook h = dynamicLogWithPP $ defaultPP
     -- no separator between workspaces
     , ppWsSep           = ""
     -- put a few spaces between each object
-    , ppSep             = "  "
+    , ppSep             = " "
     -- output to the handle we were given as an argument
     , ppOutput          = hPutStrLn h
     }
+
+xpc :: XPConfig
+xpc = defaultXPConfig { bgColor  = "black"
+                      , fgColor  = "grey"
+                      , promptBorderWidth = 0
+                      , position = Bottom
+                      , height   = 15
+                      , historySize = 256
+                      }
+
+searchSite = S.promptSearchBrowser xpc "ff3"
+search     = [("g", searchSite S.google)
+             ,("h", searchSite S.hoogle)
+             ,("a", searchSite S.amazon)
+             ,("i", searchSite S.imdb)
+             ,("y", searchSite S.youtube)]
+
+commands :: X [(String, X ())]
+commands = defaultCommands

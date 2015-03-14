@@ -7,7 +7,7 @@ import           XMonad
 import qualified XMonad.StackSet                    as W
 import           XMonad.ManageHook ((=?),resource,stringProperty)
 import           XMonad.Util.NamedScratchpad
-import           XMonad.Util.Types
+import           XMonad.Util.Types (Direction2D(..))
 --import           XMonad.Util.WindowProperties
 
 type NamedScrathpads = [NamedScratchpad]

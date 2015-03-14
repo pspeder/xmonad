@@ -10,6 +10,7 @@ module PSP.Topics
 , myTopicLayoutHook
 , spawnSelected'
 , spawnShell
+, spawnShellIn
 ) where
 
 import XMonad
@@ -52,13 +53,10 @@ myTopicDefs =
         , tdHidden          = False                 -- Should the workspace be hidden
         , tdDir             = "~"                   -- X.A.TopicSpace directory
         , tdBoundApps       = []                    -- X Property of apps that should always spawn on this workspace
-        , tdMenuApps        =                       -- Apps that can be launched via ws menu
-            [ ("Terminal",      myTerminal  )
-            , ("PDF Viewer",    myPDFViewer )
-            , ("Editor",        myEditor    )
-            ]
-        , tdKeyBindings     =                       -- KeyBindings that are bound to this workspace
-            [ ("M-z", spawnShell ) ]
+        , tdMenuApps        = [ ("Terminal"  , myTerminal  ) -- Apps that can be launched via ws menu
+                              , ("PDF Viewer", myPDFViewer )
+                              , ("Editor"    , myEditor    ) ]
+        , tdKeyBindings     = [ ("M-z", spawnShell ) ]-- KeyBindings that are bound to this workspace
         --, tdBoundLayout     = myStandardLayout      -- Layout hook specific for this layout
         }
   , TopicDefinition
@@ -68,10 +66,8 @@ myTopicDefs =
         , tdHidden          = False
         , tdDir             = "~"
         , tdBoundApps       = []
-        , tdMenuApps        =
-            [ -- Should probably be a shit load here...
-            ]
-        , tdKeyBindings     = [ ("M-z", spawn "notify-send 'Det virker'") ]
+        , tdMenuApps        = [] -- Should probably be a shit load here...
+        , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
@@ -80,20 +76,18 @@ myTopicDefs =
         , tdStartupAction   = True
         , tdHidden          = False
         , tdDir             = "~/mail"
-        , tdBoundApps       = [ClassName "Thunderbird", Resource "mutt"]
-        , tdMenuApps        =
-            [ ("Mail and Calendar", "thunderbird"     )
-            , ("Mail (mutt)",       "mutt"            )
-            , ("Notes",             "urxvt -cd ~/notes -e vim"  )
-            ]
-        , tdKeyBindings     =
-            [ ("M-z", spawn $ "notify-send " ++ "\"noget\"") ]
+        , tdBoundApps       = [ ClassName "Thunderbird"
+                              , Resource "mutt" ]
+        , tdMenuApps        = [ ("Mail and Calendar", "thunderbird"             )
+                              , ("Mail (mutt)"      , "mutt"                    )
+                              , ("Notes"            , "urxvt -cd ~/notes -e vim") ]
+        , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "4:dev"
         , tdAction          = spawn "gvim"
-        , tdStartupAction  = False
+        , tdStartupAction   = False
         , tdHidden          = False
         , tdDir             = "~/dev"
         , tdBoundApps       = [ ClassName "Gvim"
@@ -106,26 +100,22 @@ myTopicDefs =
                               , ClassName "jetbrains-idea"
                               , ClassName "jetbrains-android-studio"
                               , ClassName "Mousepad"]
-        , tdMenuApps        =
-            [ ("GVIM",              "gvim --role 'dev-gvim'"          )
-            , ("Netbeans",          "netbeans"                        )
-            , ("Eclipse",           "eclipse"                         )
-            , ("Sublime Text 2",    "subl"                            )
-            , ("Notepadqq",         "notepadqq"                       )
-            , ("IntelliJ",          "intellij-idea-ultimate-edition"  )
-            , ("PDF Viewer",        myPDFViewer                       )
-            , ("PDF for Edit",      "impressive -B 0 --windowed --nologo --noclicks --wrap --nowheel")
-            ]
-        , tdKeyBindings      =
-            [ ("M-j",     rotSlavesDown   )
-            , ("M-k",     rotSlavesUp     )
-            ]
+        , tdMenuApps        = [ ("GVIM"          , "gvim --role 'dev-gvim'"           )
+                              , ("Netbeans"      , "netbeans"                         )
+                              , ("Eclipse"       , "eclipse"                          )
+                              , ("Sublime Text 2", "subl"                             )
+                              , ("Notepadqq"     , "notepadqq"                        )
+                              , ("IntelliJ"      , "intellij-idea-ultimate-edition"   )
+                              , ("PDF Viewer"    , myPDFViewer                        )
+                              , ("PDF Viewer"    , "mupdf"                            ) ]
+        , tdKeyBindings     = [ ("M-j", rotSlavesDown   )
+                              , ("M-k", rotSlavesUp     ) ]
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "5:www"
         , tdAction          = spawn myBrowser
-        , tdStartupAction  = False
+        , tdStartupAction   = False
         , tdHidden          = False
         , tdDir             = "~/downloads"
         , tdBoundApps       = [ ClassName "Firefox"
@@ -136,33 +126,28 @@ myTopicDefs =
                               , ClassName "Vimprobable"
                               , ClassName "Xombrero"
                               , Role "browser" ]
-        , tdMenuApps        =
-            [ ("Firefox",           "firefox"     )
-            , ("Chrome",            "chrome"      )
-            , ("Chromium",          "chromium"    )
-            , ("Opera",             "opera"       )
-            , ("Vimprobable",       "vimprobable" )
-            , ("Xombrero",          "xombrero"    )
-            ]
-        , tdKeyBindings     =
-            [ ("M-n",               spawn myBrowserNewWindow    )
-            , ("M-S-n",             spawn myBrowserPrivateWin   )
-            ]
+        , tdMenuApps        = [ ("Midori"     , "midori"        )
+                              , ("Firefox"    , "firefox"       )
+                              , ("Chrome"     , "chrome"        )
+                              , ("Chromium"   , "chromium"      )
+                              , ("Opera"      , "opera"         )
+                              , ("Vimprobable", "vimprobable"   )
+                              , ("Xombrero"   , "xombrero"      ) ]
+        , tdKeyBindings     = [ ("M-n"  , spawn myBrowserNewWindow  )
+                              , ("M-S-n", spawn myBrowserPrivateWin ) ]
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "6:chat"
         , tdAction          = spawn "pidgin" >> spawn "skype"
-        , tdStartupAction  = True
+        , tdStartupAction   = True
         , tdHidden          = False
         , tdDir             = "~/downloads"
         , tdBoundApps       = [ ClassName "Skype"
                               , ClassName "Pidgin"
-                              , Resource "Xchat"]
-        , tdMenuApps        =
-            [ ("Skype",             "skype" )
-            , ("Pidgin",            "pidgin")
-            ]
+                              , Resource "Xchat" ]
+        , tdMenuApps        = [ ("Skype" , "skype" )
+                              , ("Pidgin", "pidgin") ]
         , tdKeyBindings     = []
         --, tdBoundLayout     = myIMLayout
         }
@@ -173,11 +158,9 @@ myTopicDefs =
         , tdHidden          = False
         , tdDir             = "~/shares"
         , tdBoundApps       = [ ClassName "VirtualBox" ]
-        , tdMenuApps        =
-            [ ("VirtualBox",    "virtualbox"                  )
-            , ("Win7 VM",       "virtualbox --startvm win7"   )
-            , ("fedbox VM",     "virtualbox --startvm fedbox" )
-            ]
+        , tdMenuApps        = [ ("VirtualBox", "virtualbox"                  )
+                              , ("Win7 VM"   , "virtualbox --startvm win7"   )
+                              , ("fedbox VM" , "virtualbox --startvm fedbox" ) ]
         , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
@@ -190,70 +173,64 @@ myTopicDefs =
         , tdBoundApps       = [ ClassName "Gimp"
                               , ClassName "Lives"
                               , ClassName "Pitivi" ]
-        , tdMenuApps        =
-            [ ("The Gimp", "gimp"  )
-            , ("Pitivi",   "pitivi")
-            , ("LiVES",    "lives" )
-            ]
+        , tdMenuApps        = [ ("The Gimp", "gimp"  )
+                              , ("Pitivi"  , "pitivi")
+                              , ("LiVES"   , "lives" ) ]
         , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "server"
         , tdAction          = spawnShell >> spawn "beastmouse"
-        , tdStartupAction  = False
+        , tdStartupAction   = False
         , tdHidden          = True
         , tdDir             = "~/shares"
         , tdBoundApps       = []
         , tdMenuApps        = []--("M-t a", spawn {- script to add a torrent file to server -})
-        , tdKeyBindings     = [ ("M-m p", spawn "ssh beast 'mpc toggle'"                )
-                              , ("M-m s", spawn "ssh beast 'mpc stop'"                  )
-                              , ("M-m f", spawn "ssh beast 'mpc next'"                  )
-                              , ("M-m b", spawn "ssh beast 'mpc prev'"                  )
-                              ]
+        , tdKeyBindings     = [ ("M-S-m p", spawn "ssh beast 'mpc toggle'"                )
+                              , ("M-S-m s", spawn "ssh beast 'mpc stop'"                  )
+                              , ("M-S-m f", spawn "ssh beast 'mpc next'"                  )
+                              , ("M-S-m b", spawn "ssh beast 'mpc prev'"                  ) ]
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "remotes"
         , tdAction          = spawnShell >*> 5 -- possibly terminals to five most used connections
-        , tdStartupAction  = False
+        , tdStartupAction   = False
         , tdHidden          = True
         , tdDir             = "~/shares"
         , tdBoundApps       = [ Resource "xfreerdp"
                               , Resource "qsynergy"
                               , ClassName "Teamviewer.exe" `And` (Not $ Resource "Actual window") ]
-        , tdMenuApps        =
-            [ ("XFreeRDP"       ,"xfreerdp"    )
-            , ("QSynergy"       ,"qsynergy"    )
-            , ("Teamviewer"     ,"teamviewer"  )
-            ]
+        , tdMenuApps        = [ ("XFreeRDP"   , "xfreerdp"    )
+                              , ("QSynergy"   , "qsynergy"    )
+                              , ("Teamviewer" , "teamviewer"  ) ]
         , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "configs"
-        , tdAction          = spawnSelected' configs
-        , tdStartupAction  = False
+        , tdAction          = return ()
+        , tdStartupAction   = False
         , tdHidden          = False
         , tdDir             = "~/dev/Configs"
         , tdBoundApps       = []
-        , tdMenuApps        = configs
+        , tdMenuApps        = []
         , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
   ]
-    where configs = [("zsh", "")]
 
 
 data TopicDefinition = TopicDefinition
-                     { tdName        :: !Topic
-                     , tdAction      :: !(X ())
-                     , tdStartupAction :: !Bool
-                     , tdHidden      :: !Bool
-                     , tdDir         :: !Dir
-                     , tdMenuApps    :: ![(String, String)] -- Pretty name and exec for 2D menu
-                     , tdBoundApps   :: ![Property]        -- Some window property for ManageHook
-                     , tdKeyBindings :: ![(String, X())] -- [(key, app)]
+                     { tdName           :: !Topic
+                     , tdAction         :: !(X ())
+                     , tdStartupAction  :: !Bool
+                     , tdHidden         :: !Bool
+                     , tdDir            :: !Dir
+                     , tdMenuApps       :: ![(String, String)]  -- Pretty name and exec string for 2D menu
+                     , tdBoundApps      :: ![Property]          -- Some window property for ManageHook
+                     , tdKeyBindings    :: ![(String, X())]     -- [(key, app)]
                      --, tdBoundLayout :: ManageHook
                      }
 
@@ -290,13 +267,9 @@ replace old new xs@(y:ys) = case stripPrefix old xs
                             of Nothing  -> y : replace old new ys
                                Just ys' -> new ++ replace old new ys'
 
---myTopicKeys             = TU.topicKeyBinds myTopicDefs
---                       ++ TU.topicMenuKeyBind (myTopicDefs, myGSConfig, myTopicMenuKey)
---topicMenuKeyBind :: TopicDefinitions -> (String, X ())
---            --[( "M-" ++ [k], windows $ W.view t ) | t <- myNumberedTopics,
-              --                                             k <- show $ take (length myNumberedTopics) [1..] ] ++
-              --[( "M-S-" ++ k, windows . W.shift t ) | t <- myNumberedTopics, k <- map (\n -> take 1 n) myNumberedTopics ] ++
--- TODO : Take as argument the other keys and make keybindings in there that overlap with topicAppsKeys be bound on corresponding workspaces and the default ("", Action) be the binding in regular keys
+-- | A list of keybindings related to topics
+-- TODO : Take as argument the other keys and make keybindings in there that overlap with topicAppsKeys
+-- be bound on corresponding workspaces and the default ("", Action) be the binding in regular keys
 myTopicKeys :: [(String, X ())]
 myTopicKeys = ( ("M-m", bindOn topicsApps):(topicShifts ++ keyBinds) )
     where
@@ -389,25 +362,28 @@ myTopicKeys = ( ("M-m", bindOn topicsApps):(topicShifts ++ keyBinds) )
             where appendNsAndAsToKb acc = [ (kb_nas, <-  ] ++ acc
 -}
 
---myTopicManageHook       = TU.topicManageHook myTopicDefs
 -- |ManageHook -- compile a manage hook from the following:
-myManageHook :: [String]            -- ^ ts  : list of window properties to be forced into tiling (gimp hopefully)
-             -> [String]            -- ^ fs  : list of window properties to float by standard floating algorithm
-             -> [String]            -- ^ cfs : list of window properties to force into centered floats
-             -> [String]            -- ^ ffs : list of window properties to force into full floats
-             -> [(String, String)]  -- ^ mss : manual shifts [(property, workspace)]
-             -> [String]            -- ^ is  : ignored window properties
+myManageHook :: [Property]          -- ^ ts  : list of window properties to be forced into tiling
+             -> [Property]          -- ^ fs  : list of window properties to float by standard floating algorithm
+             -> [Property]          -- ^ cfs : list of window properties to force into centered floats
+             -> [Property]          -- ^ ffs : list of window properties to force into full floats
+             -> [(Property, Topic)] -- ^ mss : manual shifts [(property, workspace)]
+             -> [Property]          -- ^ is  : ignored window properties
              -> ManageHook          -- ^ The ManageHook to keep track of topics, floats and fullscreen apps.
 myManageHook ts fs cfs ffs mss is = --(composeAll . concat $
-    -- [ [ matchAny p --> doShift n | (p,n) <- mss ]
-    -- , [ className =? "Gimp" --> (ask >>= doF . W.sink) ]
-    -- ]) <+> 
     topicManageHook <+> (composeAll . concat $
-    [ --[ matchAny ts'  --> doTile        | ts'  <- ts  ]
-      [ matchAny fs'  --> doFloat       | fs'  <- fs  ]
-    , [ matchAny cfs' --> doCenterFloat | cfs' <- cfs ]
-    , [ matchAny ffs' --> doMyFFloat    | ffs' <- ffs ]
-    , [ matchAny is'  --> doIgnore      | is'  <- is  ]
+    [ [ propertyToQuery p   --> doShift n     | (p,n)<- mss ]
+    , [ propertyToQuery ts' --> doTile        | ts'  <- ts  ]
+    , [ propertyToQuery fs' --> doFloat       | fs'  <- fs  ]
+    , [ propertyToQuery cfs'--> doCenterFloat | cfs' <- cfs ]
+    , [ propertyToQuery ffs'--> doMyFFloat    | ffs' <- ffs ]
+    , [ propertyToQuery is' --> doIgnore      | is'  <- is  ]
+--  , [ className =? "Gimp" --> (ask >>= doF . W.sink) ]
+--      [ matchAny ts'  --> doTile        | ts'  <- ts  ]
+--    , [ matchAny fs'  --> doFloat       | fs'  <- fs  ]
+--    , [ matchAny cfs' --> doCenterFloat | cfs' <- cfs ]
+--    , [ matchAny ffs' --> doMyFFloat    | ffs' <- ffs ]
+--    , [ matchAny is'  --> doIgnore      | is'  <- is  ]
     ]) <+> (composeOne . concat $
     [ [ isFullscreen -?> doFullFloat   ]
     , [ isDialog     -?> doCenterFloat ]
@@ -482,8 +458,8 @@ myStandardLayout = tiled ||| mTiled ||| simpleTabbed ||| myNoBordersFullLayout
 spawnShell :: X ()
 spawnShell = currentTopicDir myTopicConfig >>= spawnShellIn
 
-spawnShellIn :: Dir -> X ()
-spawnShellIn dir = spawn $ "urxvtc -cd '" ++ dir ++ "' "
+spawnShellIn :: String -> X ()
+spawnShellIn dir = spawn $ "cd " ++ dir ++ " && urxvtc -e /usr/bin/zsh"
 
 -- | From: http://ixti.net/software/2013/09/07/xmonad-action-gridselect-spawnselected-with-nice-titles.html
 -- Select an application to launch from X.A.GridSelect with a pp'ed name.
