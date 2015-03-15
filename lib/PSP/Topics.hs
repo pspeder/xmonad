@@ -11,15 +11,19 @@ module PSP.Topics
 , spawnSelected'
 , spawnShell
 , spawnShellIn
+, myGSConfig
+, myColorizer
+, goToSelectedWS
 ) where
 
 import XMonad
 import XMonad.ManageHook
 import Data.Char (isDigit)
-import Data.List (sortBy, stripPrefix)
+import Data.List (sortBy, stripPrefix, partition)
 import qualified XMonad.StackSet as W
 import XMonad.Hooks.ManageHelpers
 import XMonad.Actions.RotSlaves (rotSlavesUp,rotSlavesDown)
+import XMonad.Util.Scratchpad (scratchpadFilterOutWorkspace)
 import XMonad.Actions.TopicSpace
 import XMonad.Actions.GridSelect
 import XMonad.Actions.PerWorkspaceKeys
@@ -475,3 +479,51 @@ matchAny s = liftAny (=? s) [className, title, wmname, wmrole, resource]
         wmname = stringProperty "WM_NAME"
         wmrole = stringProperty "WM_WINDOW_ROLE"
 
+-- GridSelect color scheme
+myColorizer :: Window -> Bool -> X (String, String)
+myColorizer = colorRangeFromClassName
+	(0x00,0x00,0x00) --lowest inactive bg
+	(0xFF,0x8F,0xFF) --highest inactive bg
+	(0x58,0x71,0xFF) --active bg
+	(0xBB,0xBB,0xBB) --inactive fg
+	(0x00,0x00,0x00) --active fg
+
+-- GridSelect theme
+--myGSConfig :: t -> GSConfig Window
+myGSConfig = (buildDefaultGSConfig myColorizer)
+	{ gs_cellheight  = 50
+	, gs_cellwidth   = 200
+	, gs_cellpadding = 10
+	, gs_font        = dzenFont
+	}
+
+dzenFont       = "-*-montecarlo-medium-r-normal-*-11-*-*-*-*-*-*-*"
+
+-- | 
+goToSelectedWS :: TopicConfig -> Bool -> GSConfig WindowSpace -> X ()
+goToSelectedWS topicConfig =
+  withSelectedWS $ switchTopic topicConfig . W.tag
+
+withSelectedWS :: (WindowSpace -> X ()) -> Bool -> GSConfig WindowSpace -> X ()
+withSelectedWS callback inclEmpty conf = do
+  mbws <- gridselectWS inclEmpty conf
+  case mbws of
+    Just ws -> callback ws
+    Nothing -> return ()
+
+-- Includes empty window spaces if {True}
+gridselectWS :: Bool -> GSConfig WindowSpace -> X (Maybe WindowSpace)
+gridselectWS inclEmpty conf =
+  withWindowSet $ \ws -> do
+    let hid = W.hidden ws
+        vis = map W.workspace $ W.visible ws
+        w_all = scratchpadFilterOutWorkspace $ hid ++ vis
+        wss = if inclEmpty
+              then let (nonEmp, emp) = partition nonEmptyWS w_all
+                   in nonEmp ++ emp
+              else Prelude.filter nonEmptyWS w_all
+        ids = map W.tag wss
+    gridselect conf $ zip ids wss
+
+nonEmptyWS :: WindowSpace -> Bool
+nonEmptyWS = (/= Nothing) . W.stack

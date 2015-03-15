@@ -63,7 +63,7 @@ myConfig = do
         [ ("M-<Return>"             , spawnShell                                )
         , ("M-<Tab>"                , rotAllUp                                  )
         , ("M-S-<Tab>"              , rotAllDown                                )
-        , ("M-w"                    , gridselectWorkspace defaultGSConfig W.view)
+        , ("M-w"                    , goToSelectedWS myTopicConfig True defaultGSConfig)
         --, ("M-q"                    , search                                    )
         , ("M-y"                    , commands >>= runCommand                   )
         , ("M-S-w"                  , spawn $ "notify-send " ++ show myNumberedTopics)
