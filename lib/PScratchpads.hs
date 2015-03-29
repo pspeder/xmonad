@@ -1,38 +1,18 @@
 module PScratchpads
 ( pspNamedScratchpadManageHook
-, pspNamedScratchpadKeys
+, NamedScratchpads
+, namedScratchpadAction
+, myScratches
 ) where
 
 import           XMonad
 import qualified XMonad.StackSet                    as W
-import           XMonad.ManageHook ((=?),resource,stringProperty)
 import           XMonad.Util.NamedScratchpad
 import           XMonad.Util.Types (Direction2D(..))
+--import           XMonad.ManageHook ((=?),resource,stringProperty)
 --import           XMonad.Util.WindowProperties
 
 type NamedScrathpads = [NamedScratchpad]
-
-popOut :: Direction2D -> Rational -> ManageHook
-popOut direction s = case direction of U -> customFloating $ W.RationalRect   0  (1-s) 1 s
-                                       D -> customFloating $ W.RationalRect   0    0   1 s
-                                       R -> customFloating $ W.RationalRect   0    0   s 1
-                                       L -> customFloating $ W.RationalRect (1-s)  0   s 1
-
-pspNamedScratchpadManageHook :: ManageHook
-pspNamedScratchpadManageHook = namedScratchpadManageHook myScratches
-
-pspNamedScratchpadKeys :: [(String, X ())]
-pspNamedScratchpadKeys =
-    [ ("M-<Space>",   namedScratchpadAction myScratches "term"    )
-    , ("M-s n", namedScratchpadAction myScratches "notes"   )
-    , ("M-s e", namedScratchpadAction myScratches "editor"  )
-    , ("M-s t", namedScratchpadAction myScratches "tasks"   )
-    , ("M-s i", namedScratchpadAction myScratches "ghci"    )
-    , ("M-s s", namedScratchpadAction myScratches "mixer"   )
-    , ("M-s h", namedScratchpadAction myScratches "htop"    )
-    , ("M-s p", namedScratchpadAction myScratches "mail"    )
-    , ("M-s m", namedScratchpadAction myScratches "music"   )
-    ]
 
 myScratches :: NamedScrathpads
 myScratches =
@@ -84,3 +64,13 @@ myScratches =
          }
     ]
     where wmrole = stringProperty "WM_WINDOW_ROLE"
+
+pspNamedScratchpadManageHook :: ManageHook
+pspNamedScratchpadManageHook = namedScratchpadManageHook myScratches
+
+popOut :: Direction2D -> Rational -> ManageHook
+popOut direction s = case direction of U -> customFloating $ W.RationalRect   0  (1-s) 1 s
+                                       D -> customFloating $ W.RationalRect   0    0   1 s
+                                       R -> customFloating $ W.RationalRect   0    0   s 1
+                                       L -> customFloating $ W.RationalRect (1-s)  0   s 1
+
