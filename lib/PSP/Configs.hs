@@ -1,17 +1,39 @@
 module PSP.Configs
 ( myXPConfig
+, myDarkXPConfig
 , myGSConfig
 , myColorizer
 ) where
 
-xpc :: XPConfig
-xpc = defaultXPConfig { bgColor  = "black"
-                      , fgColor  = "grey"
-                      , promptBorderWidth = 0
-                      , position = Bottom
-                      , height   = 15
-                      , historySize = 256
-                      }
+import XMonad
+import Data.List (isPrefixOf)
+import qualified Data.Map as M (Map(..),fromList)
+import XMonad.Prompt (XPConfig(..),defaultXPKeymap,XPPosition(..))
+import XMonad.Hooks.DynamicLog
+import XMonad.Actions.TopicSpace (Dir)
+import XMonad.Util.WindowProperties (Property(..))
+import XMonad.Util.Run (hPutStrLn)
+import XMonad.Actions.GridSelect (buildDefaultGSConfig,defaultGSConfig,gridselect,GSConfig(..),colorRangeFromClassName,TwoD(..),makeXEventhandler,shadowWithKeymap,cancel,select,move,substringSearch)
+
+myDarkXPConfig :: XPConfig
+myDarkXPConfig = defaultXPConfig
+    { bgColor           = "black"
+    , fgColor           = "grey"
+    , promptBorderWidth = 0
+    , position          = Bottom
+    , height            = 15
+    , historySize       = 256
+    }
+
+myXPConfig :: XPConfig
+myXPConfig = defaultXPConfig
+    { bgColor           = "black"
+    , fgColor           = "#3399ff"
+    , promptBorderWidth = 0
+    , position          = Top
+    , height            = 15
+    , historySize       = 256
+    }
 
 defaultXPConfig =
     XPC { font              = "-misc-fixed-*-*-*-*-12-*-*-*-*-*-*-*"
@@ -74,6 +96,7 @@ myNavigation = makeXEventhandler $ shadowWithKeymap navKeyMap navDefaultHandler
 
 dzenFont = "-*-montecarlo-medium-r-normal-*-11-*-*-*-*-*-*-*"
 
+{-
 myTopicConfig :: TopicConfig
 myTopicConfig = defaultTopicConfig
   { topicDirs           = myTopicDirs
@@ -81,18 +104,19 @@ myTopicConfig = defaultTopicConfig
   , defaultTopic        = myDefaultTopic
   , topicActions        = myTopicActions
   }
+-}
 
 -- Loghook
 myLogHook h = dynamicLogWithPP $ defaultPP
-    -- display current workspace as darkgrey on light grey (opposite of 
+    -- display current workspace as darkgrey on light grey (opposite of
     -- default colors)
-    { ppCurrent         = dzenColor "#303030" "#909090" . pad 
+    { ppCurrent         = dzenColor "#303030" "#909090" . pad
     -- display other workspaces which contain windows as a brighter grey
-    , ppHidden          = dzenColor "#909090" "" . pad 
+    , ppHidden          = dzenColor "#909090" "" . pad
     -- display other workspaces with no windows as a normal grey
-    , ppHiddenNoWindows = dzenColor "#606060" "" . pad 
+    , ppHiddenNoWindows = dzenColor "#606060" "" . pad
     -- display the current layout as a brighter grey
-    , ppLayout          = dzenColor "#909090" "" . pad 
+    , ppLayout          = dzenColor "#909090" "" . pad
     -- if a window on a hidden workspace needs my attention, color it so
     , ppUrgent          = dzenColor "#ff0000" "#803333" . pad . dzenStrip
     -- shorten if it goes over 100 characters
@@ -125,9 +149,29 @@ myDefaultTabbedConfig = defaultTheme
     }
 -}
 
+data ProgSetup = ProgSetup
+    { pspHomeDir        :: !Dir
+    , pspDefaultDir     :: !Dir
+    , pspTerminal       :: !String
+    , pspPDF            :: !String
+    , pspMail           :: !String
+    , pspEditor         :: !String
+    , pspBrowser        :: !String
+    , pspNewBrowserTab  :: !String
+    , pspNewBrowserWin  :: !String
+    , pspPrivBrowserWin :: !String
+    , pspFloats         :: ![Property]
+    , pspCFloats        :: ![Property]
+    , pspFullFloats     :: ![Property]
+    , pspIgnores        :: ![Property]
+    }
+
+
 pspDefaults :: ProgSetup
 pspDefaults = ProgSetup
-    { pspTerminal       = "urxvtcd"
+    { pspHomeDir        = "/home/psp"
+    , pspDefaultDir     = "/home/psp"
+    , pspTerminal       = "urxvtcd"
     , pspPDF            = "xournal"
     , pspMail           = "mutt"
     , pspEditor         = "gvim"
@@ -135,11 +179,11 @@ pspDefaults = ProgSetup
     , pspNewBrowserTab  = "firefox -new-tab "
     , pspNewBrowserWin  = "firefox -new-window "
     , pspPrivBrowserWin = "firefox -private-window "
-    , pspFloats         = ["xclock"]
-    , pspCFloats        = ["SMPlayer","MPlayer","VirtualBox","XMessage"
-                          ,"XFontSel","bashrun","zshrun"
-                          ,"Google Chrome Options","Chromium Options"]
-    , pspFullFloats     = ["XBMC","Kodi"]
-    , pspIgnores        = ["desktop","desktop_window","notify_osd"
-                          ,"staleontray","trayer","dzen2","dzen2-bar"]
+    , pspFloats         = [Resource "xclock"]
+    , pspCFloats        = [ ClassName "SMPlayer", ClassName "MPlayer", ClassName"XMessage"
+                          , ClassName "XFontSel", ClassName "bashrun", ClassName "zshrun"
+                          , Title "Google Chrome Options", Title "Chromium Options"]
+    , pspFullFloats     = [ClassName "XBMC", ClassName "Kodi"]
+    , pspIgnores        = [Resource "desktop",Resource "desktop_window",Resource "notify_osd", ClassName "Dunst"
+                          ,Resource "staleontray", Resource "trayer",Resource "dzen2", Resource "dzen2-bar"]
     }

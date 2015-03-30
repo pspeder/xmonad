@@ -2,6 +2,8 @@ module PScratchpads
 ( pspNamedScratchpadManageHook
 , NamedScratchpads
 , namedScratchpadAction
+, namedScratchpadFilterOutWorkspacePP
+, namedScratchpadFilterOutWorkspace
 , myScratches
 ) where
 

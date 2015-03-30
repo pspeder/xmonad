@@ -1,28 +1,65 @@
+{-# LANGUAGE TypeSynonymInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
 module PSP.Utils
-( spawnShellIn
+( spawnIn
+, spawnShellIn
 , spawnSelected'
 , spawnToWorkspace
 , goToSelectedWS
 , shiftToSelectedWS
 , withSelectedWS
 , nonEmptyWS
+, changeDir
 , matchAny
 , replace
 ) where
 
 import XMonad
+import Control.Monad (when)
+import System.Directory (setCurrentDirectory,getCurrentDirectory)
+import XMonad.Layout.LayoutModifier
 import Data.List(stripPrefix,partition)
-import qualified XMonad.StackSet as W (greedyView,hidden,shift,stack,tag,visible,workspace)
+import qualified XMonad.StackSet as W (currentTag,greedyView,hidden,shift,stack,tag,visible,workspace)
 import XMonad.Actions.TopicSpace (switchTopic,TopicConfig)
 import XMonad.Actions.GridSelect (defaultGSConfig,gridselect,GSConfig(..))
 import XMonad.Util.NamedScratchpad (namedScratchpadFilterOutWorkspace)
 
+-- | From: http://xmonad.org/xmonad-docs/xmonad-contrib/src/XMonad-Layout-WorkspaceDir.html
+data Chdir = Chdir String deriving ( Typeable )
+instance Message Chdir
+
+data WorkspaceDir a = WorkspaceDir String deriving ( Read, Show )
+
+instance LayoutModifier WorkspaceDir Window where
+    modifyLayout (WorkspaceDir d) w r = do tc <- gets (W.currentTag . windowset)
+                                           when (tc == W.tag w) $ scd d
+                                           runLayout w r
+    handleMess (WorkspaceDir _) m
+        | Just (Chdir wd) <- fromMessage m = do wd' <- cleanDir wd
+                                                return $ Just $ WorkspaceDir wd'
+        | otherwise = return Nothing
+
+workspaceDir :: LayoutClass l a => String -> l a
+             -> ModifiedLayout WorkspaceDir l a
+workspaceDir s = ModifiedLayout (WorkspaceDir s)
+
+cleanDir :: String -> X String
+cleanDir x = scd x >> io getCurrentDirectory
+
+changeDir d = (sendMessage . Chdir) d
+
+scd :: String -> X ()
+scd x = catchIO $ setCurrentDirectory x
+
 -- Spawn functions:
 -------------------
+-- | Spawn app from certain dir (gvim)
+spawnIn :: String -> String -> X()
+spawnIn app dir = spawn $ "cd " ++ dir ++ " && urxvtc -e " ++ app
+
 -- | As defined in documentation for the module X.A.GridSelect
 --   Spawn a shell in the given dir.
 spawnShellIn :: String -> X ()
-spawnShellIn dir = spawn $ "cd " ++ dir ++ " && urxvtc -e /usr/bin/zsh"
+spawnShellIn dir = spawnIn "/bin/zsh" dir
 
 -- | From: http://ixti.net/software/2013/09/07/xmonad-action-gridselect-spawnselected-with-nice-titles.html
 --   Select an application to launch from X.A.GridSelect with a pp'ed name.

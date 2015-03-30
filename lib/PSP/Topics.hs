@@ -1,5 +1,6 @@
 module PSP.Topics
-( myTopics
+( -- * A number of functions to be used xmonad.hs
+  myTopics
 , myTopicKeys
 , myNumberedTopics
 , myTopicConfig
@@ -12,11 +13,11 @@ module PSP.Topics
 ) where
 
 -- These imports are pretty much a minimum requirement.
-import XMonad (spawn,X(..),ManageHook(..))
+import XMonad (ManageHook(..),spawn,X(..))
 import qualified Data.Map as M (Map(..))
 import XMonad.Util.WindowProperties (Property(..))
 import PSP.Topics.Utils   -- Constructors and helper functions for a cleaner Topics.hs file
-import PSP.Utils      (spawnShellIn)
+import PSP.Utils      (spawnIn,spawnShellIn)
 -- Some actions
 import XMonad.Actions.RotSlaves (rotSlavesUp,rotSlavesDown)
 import XMonad.Actions.TopicSpace ((>*>),currentTopicDir,defaultTopicConfig,Dir,Topic,TopicConfig(..))
@@ -34,7 +35,7 @@ myTopicDefs =
         , tdActionOnStartup   = False     -- Should action be run on XMonad start?
         , tdActionOnFocus   = False     -- Should it be run when ws is selected?
         , tdHidden          = False     -- Should the workspace be hidden
-        , tdDir             = "~"       -- X.A.TopicSpace directory
+        , tdDir             = "/home/psp"-- X.A.TopicSpace directory
         , tdBoundApps       = []        -- X Property of apps that should spawn on this workspace
         , tdMenuApps        = -- Apps that can be launched via ws menu
                               [ ("Terminal"  , myTerminal  )
@@ -54,7 +55,7 @@ myTopicDefs =
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~"
+        , tdDir             = "/home/psp"
         , tdBoundApps       = []
         , tdMenuApps        = [] -- Should probably be a shit load here...
         , tdKeyBindings     = []
@@ -62,26 +63,26 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "3:organiser"
-        , tdAction          = spawn myMailClient
+        , tdAction          = spawn' myMailClient
         , tdActionOnStartup   = True
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/mail"
+        , tdDir             = "/home/psp/mail"
         , tdBoundApps       = [ ClassName "Thunderbird"
                               , Resource "mutt" ]
         , tdMenuApps        = [ ("Mail and Calendar", "thunderbird"             )
                               , ("Mail (mutt)"      , "mutt"                    )
-                              , ("Notes"            , "urxvt -cd ~/notes -e vim") ]
+                              , ("Notes"            , "urxvt -cd '/home/psp/notes' -e vim -c ':e .'") ]
         , tdKeyBindings     = []
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "4:dev"
-        , tdAction          = spawn "gvim"
+        , tdAction          = spawn' "gvim"
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/dev"
+        , tdDir             = "/home/psp/dev"
         , tdBoundApps       = [ ClassName "Gvim"
                               , ClassName "Netbeans IDE 8.0.2"
                               , ClassName "Eclipse"
@@ -91,7 +92,8 @@ myTopicDefs =
                               , ClassName "Notepadqq"
                               , ClassName "jetbrains-idea"
                               , ClassName "jetbrains-android-studio"
-                              , ClassName "Mousepad"]
+                              , ClassName "Mousepad"
+                              , Role "Editor" ]
         , tdMenuApps        = [ ("GVIM"          , "gvim --role 'dev-gvim'"           )
                               , ("Netbeans"      , "netbeans"                         )
                               , ("Eclipse"       , "eclipse"                          )
@@ -100,8 +102,8 @@ myTopicDefs =
                               , ("IntelliJ"      , "intellij-idea-ultimate-edition"   )
                               , ("PDF Viewer"    , myPDFViewer                        )
                               , ("PDF Viewer"    , "mupdf"                            ) ]
-        , tdKeyBindings     = [ ("M-j", rotSlavesDown   )
-                              , ("M-k", rotSlavesUp     ) ]
+        , tdKeyBindings     = [ ("M-<Tab>"       , rotSlavesDown   )
+                              , ("M-S-<Tab>"     , rotSlavesUp     ) ]
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
@@ -110,7 +112,7 @@ myTopicDefs =
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/downloads"
+        , tdDir             = "/home/psp/downloads"
         , tdBoundApps       = [ ClassName "Firefox"
                               , ClassName "Midori"
                               , ClassName "Google-chrome-stable"
@@ -126,20 +128,20 @@ myTopicDefs =
                               , ("Opera"      , "opera"         )
                               , ("Vimprobable", "vimprobable"   )
                               , ("Xombrero"   , "xombrero"      ) ]
-        , tdKeyBindings     = [ ("M-n"  , spawn myBrowserNewWindow  )
-                              , ("M-S-n", spawn myBrowserPrivateWin ) ]
+        , tdKeyBindings     = [ ("M-n"  , spawn' myBrowserNewWindow  )
+                              , ("M-S-n", spawn' myBrowserPrivateWin ) ]
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "6:chat"
-        , tdAction          = spawn "pidgin" >> spawn "skype"
+        , tdAction          = spawn' "pidgin" >> spawn "apulse32 skype"
         , tdActionOnStartup   = True
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/downloads"
+        , tdDir             = "/home/psp/downloads"
         , tdBoundApps       = [ ClassName "Skype"
                               , ClassName "Pidgin"
-                              , Resource "Xchat" ]
+                              , ClassName "Xchat" ]
         , tdMenuApps        = [ ("Skype" , "skype" )
                               , ("Pidgin", "pidgin") ]
         , tdKeyBindings     = []
@@ -147,11 +149,11 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "7:vms"
-        , tdAction          = spawn "virtualbox"
+        , tdAction          = spawn' "virtualbox"
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/shares"
+        , tdDir             = "/home/psp/vms"
         , tdBoundApps       = [ ClassName "VirtualBox" ]
         , tdMenuApps        = [ ("VirtualBox", "virtualbox"                  )
                               , ("Win7 VM"   , "virtualbox --startvm win7"   )
@@ -161,11 +163,11 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "8:media"
-        , tdAction          = spawn "gimp"
+        , tdAction          = spawn' "gimp"
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/images"
+        , tdDir             = "/home/psp/images"
         , tdBoundApps       = [ ClassName "Gimp"
                               , ClassName "Lives"
                               , ClassName "Pitivi" ]
@@ -181,9 +183,9 @@ myTopicDefs =
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = True
-        , tdDir             = "~/shares"
+        , tdDir             = "/home/psp/shares"
         , tdBoundApps       = []
-        , tdMenuApps        = []--("M-t a", spawn {- script to add a torrent file to server -})
+        , tdMenuApps        = []--("M-t a", spawn' {- script to add a torrent file to server -})
         , tdKeyBindings     = [ ("M-S-m p", spawn "ssh beast 'mpc toggle'")
                               , ("M-S-m s", spawn "ssh beast 'mpc stop'"  )
                               , ("M-S-m f", spawn "ssh beast 'mpc next'"  )
@@ -196,7 +198,7 @@ myTopicDefs =
         , tdActionOnStartup   = False
         , tdActionOnFocus   = False
         , tdHidden          = True
-        , tdDir             = "~/shares"
+        , tdDir             = "/home/psp/shares"
         , tdBoundApps       = [ Resource "xfreerdp"
                               , Resource "qsynergy"
                               , ClassName "Teamviewer.exe" `And` (Not $ Resource "Actual window") ]
@@ -212,7 +214,7 @@ myTopicDefs =
         , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = False
-        , tdDir             = "~/dev/Configs"
+        , tdDir             = "/home/psp/dev/Configs"
         , tdBoundApps       = []
         , tdMenuApps        = []
         , tdKeyBindings     = []
@@ -220,6 +222,13 @@ myTopicDefs =
         }
   ]
 
+--spawn' :: String -> X()
+--spawn' app = currentTopicDir myTopicConfig >>= (spawnIn app)
+
+spawn' :: String -> X()
+spawn' app = currentTopicDir myTopicConfig >>= (spawner app)
+    where spawner :: String -> String -> X()
+          spawner app' dir = spawn $ "cd '" ++ dir ++ "' && '" ++ app' ++ "'"
 
 -- | As defined in documentation for the module X.A.GridSelect.
 --   Spawn a shell in the dir that is bound to current topic.

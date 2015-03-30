@@ -27,7 +27,7 @@ import           XMonad.Hooks.ManageHelpers
 -- Actions
 import           XMonad.Actions.PerWorkspaceKeys(bindOn)
 -- Own modules
-import           PSP.Utils                      (spawnSelected')
+import           PSP.Utils                      (spawnSelected',changeDir)
 
 data TopicDefinition = TopicDefinition
     { tdName           :: !Topic                -- ^ Identifier
@@ -139,7 +139,7 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
         topicsApps :: [(String, X())]
         topicsApps = map (\TopicDefinition {tdName = n, tdMenuApps = as} -> (n, spawnSelected' as)) tds
 
-        -- | TODO : Modify to use view if tdActionOnFocus is set
+        -- | TODO : Modify to use view if tdActionOnFocus is set and possibly also to update directory
         topicShifts :: [(String, X ())]
         topicShifts = [("M-" ++ m ++ k, f i)
                         | (i, k) <- zip myNumberedTopics $ map show $ take (length myNumberedTopics) [1..]
@@ -155,9 +155,9 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
                       -> [(String, X())]            -- ^ Duplicates reduced in sorted list of tuples of (key string, bindOn [(Topic name, X() Action)])
         shrinkAndBind acc []     = map (\(k, nas) -> (k, bindOn nas)) acc --base case: return key bindings
         shrinkAndBind acc (x:[]) = shrinkAndBind (x:acc) []
-        shrinkAndBind acc ((k1, nas1):(k2, nas2):ks) = if k1 == k2
-                                                       then shrinkAndBind ((k1,nas1++nas2):acc)            ks
-                                                       else shrinkAndBind       ((k1,nas1):acc) ((k2,nas2):ks)
+        shrinkAndBind acc ((k1, nas1):(k2, nas2):ks') = if k1 == k2
+                                                       then shrinkAndBind ((k1,nas1++nas2):acc)            ks'
+                                                       else shrinkAndBind       ((k1,nas1):acc) ((k2,nas2):ks')
 
         -- | Manipulate a list of 'TopicDefinition' into a sorted list of tuples with el. 1 being key and el. 2 being tuples for X.A.BindOn
         sortedTopicAppsKeys :: [( String, [(Topic, X())] )]
@@ -179,8 +179,8 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
                 sortKeys :: [(String, [(Topic, X())])] -> [(String, [(Topic, X())])]
                 sortKeys = sortBy sortBinds
 
-            in sortKeys $ concat $ foldr (\TopicDefinition {tdName=n, tdKeyBindings=ks} acc
-                                            -> (map (\(k,a) -> (k, [(n,a)])) ks):acc) [] tds
+            in sortKeys $ keyBindings ++ concat (foldr (\TopicDefinition {tdName=n, tdKeyBindings=ks'} acc
+                                            -> (map (\(k,a) -> (k, [(n,a)])) ks'):acc) [] tds)
 
 {--myTopicLayoutHook       = TU.topicLayoutHook myTopicDefs
 -- | Transform a TopicDefinition-list into a ManageHook
