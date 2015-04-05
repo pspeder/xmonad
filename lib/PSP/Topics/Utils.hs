@@ -112,12 +112,6 @@ topicManageHook tds ts fs cfs ffs is mss =
     , [ propertyToQuery cfs'--> doCenterFloat | cfs' <- cfs ]
     , [ propertyToQuery ffs'--> doMyFFloat    | ffs' <- ffs ]
     , [ propertyToQuery is' --> doIgnore      | is'  <- is  ]
---      Previous attempts/Alternative method, that didn't quite work for my needs.
---      [ matchAny ts'  --> doTile        | ts'  <- ts  ]
---    , [ matchAny fs'  --> doFloat       | fs'  <- fs  ]
---    , [ matchAny cfs' --> doCenterFloat | cfs' <- cfs ]
---    , [ matchAny ffs' --> doMyFFloat    | ffs' <- ffs ]
---    , [ matchAny is'  --> doIgnore      | is'  <- is  ]
     ]) <+> (composeOne . concat $
     [ [ isFullscreen -?> doFullFloat   ]
     , [ isDialog     -?> doCenterFloat ]
@@ -182,7 +176,8 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
             in sortKeys $ keyBindings ++ concat (foldr (\TopicDefinition {tdName=n, tdKeyBindings=ks'} acc
                                             -> (map (\(k,a) -> (k, [(n,a)])) ks'):acc) [] tds)
 
-{--myTopicLayoutHook       = TU.topicLayoutHook myTopicDefs
+{-
+--myTopicLayoutHook       = TU.topicLayoutHook myTopicDefs
 -- | Transform a TopicDefinition-list into a ManageHook
 --myTopicLayoutHook :: ManageHook
 --myTopicLayoutHook = composeAll $ map (\TopicDefinition { tdName = n

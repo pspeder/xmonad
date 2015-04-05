@@ -7,7 +7,7 @@ import qualified XMonad.StackSet as W
 import Control.Monad (liftM,sequence)
 import XMonad.Util.NamedWindows (getName, unName)
 import XMonad.Util.Loggers
-import Data.List (intercalate)
+import Data.List (intercalate,elemIndex)
 import Data.Traversable (traverse, fmapDefault)
 import Control.Monad.Writer (All(..))
 import XMonad.Hooks.EwmhDesktops
@@ -44,7 +44,7 @@ main = do
     checkTopicConfig myTopics myTopicConfig
     xmonad $ myConfig d
 
-startupApps = [spawn "pidgin", safeSpawn "apulse32" ["skype"]]
+startupApps = [spawn "urxvt"]--[spawn "pidgin"], safeSpawn "apulse32" ["skype"]]
 myConfig d =
     withUrgencyHookC LibNotifyUrgencyHook urgencyConfig {suppressWhen = OnScreen, remindWhen = Repeatedly 5 90} $
     ewmh $ defaultConfig
@@ -55,7 +55,7 @@ myConfig d =
                                  setWMName "LG3D"
                                  setDefaultCursor xC_left_ptr
                                  --fmap (whenJust . spawn) startupApps
-                                 mconcat startupApps
+                                 mconcat startupApps -- requires at least one startupApp
                                  return ()
         , handleEventHook   = ewmhDesktopsEventHook <+> fullscreenEventHook <+>
                     (\e -> case e of
@@ -92,7 +92,7 @@ myConfig d =
         , "M-z"
         ] ++ [ ("M-" ++ s ++ [n]) | n <- show [1..9]
                                   , s <- ["S-", ""] ])
-        `additionalKeysP` ((myTopicKeys
+        `additionalKeysP` (myTopicKeys (
         [ ("M-<Return>"             , spawnShell                                )
         , ("M-p s"                  , sshPrompt myXPConfig                      )
         , ("M-p d"                  , changeDir myXPConfig                      )
@@ -112,7 +112,7 @@ myConfig d =
         -- | Screen Brightness
         , ("XF86MonBrightnessDown"  , spawn "xbacklight -dec 8%"                )
         , ("XF86MonBrightnessUp"    , spawn "xbacklight -inc 8%"                )
-        ]) ++ keysNamedScratchpads)
+        ] ++ keysNamedScratchpads))
 
 myLogHook h = dynamicLogWithPP $ pspFilterOutWorkspacePP $ namedScratchpadFilterOutWorkspacePP $ myDzenPP { ppOutput = hPutStrLn h }
 
@@ -144,29 +144,37 @@ myDzenConky  = "conky -c ~/.xmonad/conkyrc | dzen2 -x '320' -w '704' -ta 'r'" ++
 myDzenStyle  = " -h '20' -fg '#777777' -bg '#222222' -fn 'arial:bold:size=9'"
 
 myDzenPP  = dzenPP
-    { ppCurrent = dzenColor "#3399ff" "" . wrap " " " "
-    , ppHidden  = dzenColor "#dddddd" "" . wrap " " " "
-    , ppHiddenNoWindows = dzenColor "#777777" "" . wrap " " " "
-    , ppUrgent  = dzenColor "#ff0000" "" . wrap " " " "
-    , ppSep     = ""
-    , ppLayout  = dzenColor "#aaaaaa" "" . wrap "^ca(1,xdotool key super+space)· " " ·^ca()"
+    { ppCurrent = dzenColor "#3399ff" "" . wrap "" "" . dzenClickWorkspace . onlyName
+    , ppHidden  = dzenColor "#dddddd" "" . wrap "" "" . dzenClickWorkspace . onlyName
+    , ppHiddenNoWindows = dzenColor "#777777" "" . dzenClickWorkspace . onlyName
+    , ppUrgent  = dzenColor "#ff0000" "" . dzenClickWorkspace . onlyName
+    , ppSep     = " "
+    , ppWsSep   = "|"
+    , ppLayout  = dzenColor "#aaaaaa" "" . wrap "^ca(1,xdotool key super+shift+l)·" "·^ca()"
     , ppExtras  = [windowCount]
     , ppOrder   = \(ws:l:t:e) -> [ws, l] ++ e
     , ppTitle   = dzenColor "#ffffff" ""
                     . wrap "^ca(1,xdotool key super+k)^ca(2,xdotool key super+shift+c)"
                            "                          ^ca()^ca()" . shorten 20 . dzenEscape
     }
+    where onlyName ws = if (':' `elem` ws) then drop 2 ws else ws
+          -- From: https://wiki.haskell.org/Xmonad/Config_archive/Nnoell's_xmonad.hs
+          dzenClickWorkspace ws = "^ca(1," ++ xdo "w;" ++ xdo index ++ ")" ++ "^ca(3," ++ xdo "w;" ++ xdo index ++ ")" ++ ws ++ "^ca()^ca()" where
+			wsIdxToString Nothing = "1"
+			wsIdxToString (Just n) = show $ mod (n+1) $ length myTopics
+			index = wsIdxToString (elemIndex ws myTopics)
+			xdo key = "/usr/bin/xdotool key super+" ++ key
+
+--winCount :: String -> String
+--winCount = show (length (withWindowSet $ W.allWindows))
 
 {-
--- | From: http://lpaste.net/81328
-windowCount :: X String
-windowCount = gets $ show . maybe 0 length . W.stack . W.workspace . W.current . windowset
-
 windowCount2 :: String
-windowCount2 = let windows = W.integrate stack windowset
+windowCount2 = let windows =  fmap (\W.Workspace {W.stack = s} -> W.integrate' s) $ withWindowSet $ W.workspaces
                    numWindows = length windows
                in show numWindows
--}
+
+--}
 
 -- | From: https://github.com/bobtwinkles/dotfiles/blob/master/xmonad/xmonad.hs
 windowCount = withWindowSet $ fmap Just . (\x -> let allWindows = W.index x

@@ -24,6 +24,7 @@ import XMonad.Actions.TopicSpace ((>*>),currentTopicDir,defaultTopicConfig,Dir,T
 
 import PSP.Constants        -- Will be replaced be a ProgSetup record.
 import PSP.Layouts    (myStandardLayout,myTopicLayoutHook)
+import PScratchpads
 
 myTopicDefs :: TopicDefinitions
 myTopicDefs =
@@ -64,7 +65,7 @@ myTopicDefs =
   , TopicDefinition
         { tdName            = "3:organiser"
         , tdAction          = spawn' myMailClient
-        , tdActionOnStartup   = True
+        , tdActionOnStartup = True
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/mail"
@@ -78,14 +79,16 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "4:dev"
-        , tdAction          = spawn' "gvim"
-        , tdActionOnStartup   = False
+        , tdAction          = spawn' "gvim" >>
+                              spawnIn "/home/psp/dev" "urxvt -role 'editorterm"
+        , tdActionOnStartup = True
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/dev"
         , tdBoundApps       = [ ClassName "Gvim"
                               , ClassName "Netbeans IDE 8.0.2"
                               , ClassName "Eclipse"
+                              , ClassName "Brackets"
                               , ClassName "Tea"
                               , ClassName "Gedit"
                               , ClassName "sublime_text"
@@ -103,7 +106,8 @@ myTopicDefs =
                               , ("PDF Viewer"    , myPDFViewer                        )
                               , ("PDF Viewer"    , "mupdf"                            ) ]
         , tdKeyBindings     = [ ("M-<Tab>"       , rotSlavesDown   )
-                              , ("M-S-<Tab>"     , rotSlavesUp     ) ]
+                              , ("M-S-<Tab>"     , rotSlavesUp     )
+                              , ("M-t"           , namedScratchpadAction myScratches "editorterm")] -- won't need to push stuff into tiling here.
         --, tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition

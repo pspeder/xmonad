@@ -24,6 +24,11 @@ myScratches =
          , query = resource =? "scratchterm"
          , hook  = customFloating $ W.RationalRect (0.5/6) (1.9/6) (5/6) (4/6)
          }
+    , NS { name  = "editorterm"
+         , cmd   = "urxvtc -name 'editorterm'"
+         , query = resource =? "editorterm"
+         , hook  = nonFloating
+         }
     , NS { name  = "notes"
          , cmd   = "gvim -name 'scratchnotepad' --role 'scratchnotepad' -n ~/notes/note.md"
          , query = wmrole =? "scratchnotepad"
