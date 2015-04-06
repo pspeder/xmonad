@@ -117,7 +117,7 @@ myConfig d =
         -- | Screen Brightness
         , ("XF86MonBrightnessDown"  , spawn "xbacklight -dec 8%"                )
         , ("XF86MonBrightnessUp"    , spawn "xbacklight -inc 8%"                )
-        ] ++ keysNamedScratchpads))
+        ] ++ keysNamedScratchpads ++ powerMenu))
 
 myLogHook h = dynamicLogWithPP $ pspFilterOutWorkspacePP $ namedScratchpadFilterOutWorkspacePP $ myDzenPP { ppOutput = hPutStrLn h }
 

@@ -64,7 +64,9 @@ myTopicLayoutHook =
                                       ||| layoutMTallD      ) .
     set ("4:dev"      , "~/dev"         ,
          let masterL = TwoPane resizePercentage (77/100)
-             editorL = layoutStackTile 1 (9/10)
+             editorL = renamed [CutWordsLeft 1]
+                     $ layoutHintsWithPlacement (0.5, 0.5)
+                     $ layoutStackTile 1 (9/10)
              comboL l= combineTwoP masterL editorL l props
              pdfsL   = myStandardLayout
              codeL   = layoutMTallD
