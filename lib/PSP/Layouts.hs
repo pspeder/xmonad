@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeSynonymInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
 {-# OPTIONS_GHC -w
  -fno-warn-missing-signatures
 #-}
@@ -5,9 +6,6 @@
 module PSP.Layouts
 ( myTopicLayoutHook
 , myStandardLayout
---, myUniLayout
-, myIMLayout
-, myGimpLayout
 , ToggleLayouts(..)
 )
 where
@@ -28,8 +26,11 @@ import XMonad.Layout.WorkspaceDir                             -- Assign local di
 import XMonad.Layout.Reflect (reflectHoriz,reflectVert)       -- Allow "turning around" ws layout
 import XMonad.Layout.Renamed
 import XMonad.Layout.ToggleLayouts
-import XMonad.Layout.Grid (Grid(GridRatio))
+import XMonad.Util.Types (Direction2D(..))
 -- Layouts
+import XMonad.Layout.Grid (Grid(GridRatio))
+import XMonad.Layout.Cross
+import XMonad.Layout.Drawer
 import XMonad.Layout.Simplest
 import XMonad.Layout.Column
 import XMonad.Layout.FixedColumn
@@ -45,87 +46,110 @@ import XMonad.Layout.NoBorders                                -- Some windows sh
 import XMonad.Layout.Tabbed -- (tabbedAlways,shrinkText,defaultTheme) -- Tabbed layout
 import XMonad.Layout.TwoPane                                  -- -- || --
 import XMonad.Layout.Column                                   -- A single column
-
---import           PSP.Utils (matchAny)
---import           PSP.Constants (myEditor)
-
-myTopicLayoutHook = renamed [CutWordsLeft 1] $ avoidStruts $ maximize $ boringWindows $ windowNavigation $ trackFloating
-                  $ onWorkspace "1:main"  (workspaceDir "~"               mainLayout            )
-                  $ onWorkspace "2:misc"  (workspaceDir "~"             $ renamed [CutWordsLeft 2] $ spacing 0 miscLayout  )
-                  $ onWorkspace "3:organiser" (workspaceDir "~/mail"      organiserLayout       )
-                  $ onWorkspace "4:dev"   (workspaceDir "~/dev"           layoutEditorAndPDF    )
-                  $ onWorkspace "5:www"   (workspaceDir "~/downloads"     webLayout             )
-                  $ onWorkspace "6:chat"  (workspaceDir "~/downloads"     chatLayout            )
-                  $ onWorkspace "7:vms"   (workspaceDir "~/shares"        vmsLayout             )
-                  $ onWorkspace "8:media" (workspaceDir "~/images"        mediaLayout           )
-                  $ onWorkspace "remotes" (workspaceDir "~/shares"        remotesLayout         )
-                  $ onWorkspace "server"  (workspaceDir "~/srv"           serverLayout          )
-                  $ onWorkspace "configs" (workspaceDir "~/dev/Configs"   confLayout            )
-                  myStandardLayout
-                    where
-                        mainLayout = myStandardLayout
-                        miscLayout = myStandardLayout
-                        organiserLayout = myStandardLayout
-                        devLayout  = myStandardLayout
-                        webLayout  = renamed [Replace"F"] $ noBorders . spacing 0 $ fullscreenFull Full
-                        chatLayout = renamed [Replace"S"]
-                                   $ withIM (15/100) (ClassName "Skype" `And` Role "") $ reflectHoriz
-                                   $ withIM (17/100) (ClassName "Pidgin" `And` Role "buddy_list") $ reflectHoriz
-                                   $ noBorders $ spacing 0 simpleTabbed
-                        vmsLayout = myStandardLayout
-                        mediaLayout = renamed [Replace"F"]
-                                    $ withIM (18/100) (Role "gimp-dock")    $ reflectHoriz
-                                    $ withIM (25/100) (Role "gimp-toolbox") $ reflectHoriz $ fullscreenFull Full
-                        remotesLayout = myStandardLayout
-                        serverLayout = myStandardLayout
-                        confLayout = myStandardLayout
-
-
-myStandardLayout = layoutTiled ||| layoutMTiled ||| layoutSTabbed ||| layoutAccordion ||| layoutFullscreenFull
+import qualified XMonad.Util.WindowProperties as WP
 
 --------------------------
---       LAYOUTS        --
+--    MAIN LAYOUTHOOK   --
 --------------------------
-layoutTiled         = renamed [Replace "V"] $ spacing 3 $ Tall 1 (2/100) (6/10)
-layoutMTiled        = renamed [Replace "H"] $ spacing 3 $ Mirror layoutTiled
-layoutSTabbed       = renamed [Replace "T"] $ noBorders $ spacing 0 $ simpleTabbed
-layoutFullscreenFull= renamed [Replace "F"] $ noBorders $ spacing 0 $ fullscreenFull Full
-layoutAccordion     = renamed [Replace "A"] Accordion
-layoutDishes        = renamed [Replace "D"] $ Dishes 1 (4/6)
-layoutCircle        = renamed [Replace "C"] Circle
-layoutEditorAndPDF  = (combineTwoP mastering editorAndTerm pdfsAndOthers toLeftL)
-                      where mastering     = TwoPane (3/100) (2/3)
-                            editorAndTerm = limitWindows 2 $ spacing 0 $ layoutHints $ Mirror $ TwoPane (3/100) (85/100)
-                            pdfsAndOthers = spacing 2 $ layoutDishes ||| layoutAccordion ||| layoutTiled ||| layoutMTiled
-                            toLeftL       =  ClassName "Gvim"  `Or`
-                                            (ClassName "URxvt" `And` Resource "editorterm")
-myIMLayout = withIM (15/100) (Resource "pspeder - skype™") $ reflectHoriz $ simpleTabbed
-myGimpLayout = withIM (15/100) (Resource "gimp-toolbox") $ reflectHoriz $ withIM (15/100) (Resource "gimp-dock") $ simpleTabbed
+myTopicLayoutHook =
+    windowNavigation . avoidStruts . trackFloating . boringWindows . renamed [CutWordsLeft 1] . maximize $
+    onWorkspace "1:main" (workspaceDir "~"              $ myStandardLayout  )$
+    onWorkspace "2:misc" (workspaceDir "~"              $ myStandardLayout  )$
+    onWorkspace "3:organiser" (workspaceDir "~/mail"    $ mailL             )$
+    onWorkspace "4:dev" (workspaceDir "~/dev"           $ devL              )$
+    onWorkspace "5:www" (workspaceDir "~/downloads"     $ webL              )$
+    onWorkspace "6:chat" (workspaceDir "~/downloads"    $ chatL             )$
+    onWorkspace "7:vms" (workspaceDir "~/shares"        $ myStandardLayout  )$
+    onWorkspace "8:media" (workspaceDir "~/images"      $ mediaL            )$
+    onWorkspace "remotes" (workspaceDir "~/shares"      $ myStandardLayout  )$
+    onWorkspace "server" (workspaceDir "~/srv"          $ myStandardLayout  )$
+    onWorkspace "configs" (workspaceDir "~/dev/Configs" $ myStandardLayout  )$
+    myStandardLayout
+    where mailL  = layoutFullscreenFull ||| withSpacing layoutMTallD
+          devL   = let masterL = TwoPane resizePercentage (77/100)
+                       editorL = layoutStackTile 1 (9/10)
+                       comboL l= combineTwoP masterL editorL l props
+                       pdfsL   = myStandardLayout
+                       codeL   = layoutStackTileD
+                       props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
+                                                   `And` Resource "editorterm")
 
+                       pdfEditor = renamed [ CutWordsLeft 1, CutWordsRight 11
+                                           , Prepend "p(", Append ")"] $ comboL pdfsL
+                       codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
+                                           , Prepend "c(", Append ")"] $ comboL codeL
+                   in codeEditor ||| pdfEditor
+          webL   = withSpacing (layoutCircle ||| layoutGrid (4/3) ||| layoutCrossD)
+               ||| layoutFullscreenFull
+          chatL  = renamed [CutWordsLeft 2]
+                 $ withIM (15/100) (ClassName "Skype" `And` Resource "pspeder - skype™")
+                 $ reflectHoriz
+                 $ renamed [CutWordsLeft 2]
+                 $ withIM (17/100) (ClassName "Pidgin" `And` Role "buddy_list")
+                 $ reflectHoriz
+                 $ layoutGridD
+          mediaL = renamed [CutWordsLeft 2]
+                 $ withIM (19/100) (ClassName "gimp-dock") $ reflectHoriz
+                 $ renamed [CutWordsLeft 2]
+                 $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz
+                 $ layoutGridD
 
--- For windows that need be full
---myNoBordersFullLayout = noBorders $ spacing 0 $ Full
--- Rudimentary
---tiled       = renamed [Replace "tiled"]     $ Tall 1 (2/100) (6/10)
---mTiled      = renamed [Replace "mTiled"]    $ Mirror tiled
---accordion   = renamed [Replace "Accordion"] Accordion
---myTabbedLayout = renamed [Replace "pTabed"] $ addTabsAlways shrinkText defaultTheme $ Tall 1 (2/100) (6/10)
---myTabbedLayout = addTabsAlways shrinkText defaultTheme $ Tall 1 (2/100) (6/10)
---myTabbedLayout = simpleTabbed
+myStandardLayout = withSpacing (layoutTallD ||| layoutMTallD) ||| layoutFullscreenFull
 
+resizePercentage = (2/100)
+withSpacing      = lAddSpacing layoutSpacing
+layoutSpacing    = 2
+layoutMasterSize = (6/10)
 
+--------------------------
+-- LAYOUTS W. DEFAULTS  --
+--------------------------
+layoutTallD             = layoutTall 1 layoutMasterSize
+layoutMTallD            = layoutMTall 1 layoutMasterSize
+layoutStackTileD        = layoutStackTile 1 (6/10)
+layoutCrossD            = layoutCross (5/6)
+layoutGridD             = layoutGrid (1/2)
+layoutAccordionD        = layoutAccordion
+layoutDishesD           = layoutDishes 1 layoutMasterSize
+
+--------------------------
+--   (NAMED) LAYOUTS    --
+--------------------------
+layoutFullscreenFull= renamed [Replace "F"] $ noBorders $ fullscreenFull Full
+layoutSTabbedD      = renamed [Replace "t"] $ noBorders $ simpleTabbed
+layoutCircle        = renamed [Replace "C"] $ Circle
+
+layoutTall m p      = renamed [Replace "H"] $ Tall m resizePercentage p
+layoutMTall m p     = renamed [Replace "V"] $ Mirror $ Tall m resizePercentage p
+layoutStackTile m p = renamed [Replace "S"] $ StackTile m resizePercentage p
+layoutGrid r        = renamed [Replace "G"] $ GridRatio r
+layoutCross p       = renamed [Replace "x"] $ Cross p resizePercentage
+layoutAccordion     = renamed [Replace "A"] $ Accordion
+layoutDishes m p    = renamed [Replace "D"] $ Dishes m p
+
+--------------------------
+--  LAYOUT COMBINATORS  --
+--------------------------
+lAddSpacing s l = renamed [CutWordsLeft 2] $ spacing s $ l
+--addedTabs s t l         = renamed [CutWordsLeft 2, Prepend "T(", Append ")"] $ spacing s $ addTabsAlways shrinkText t l
+--bothSidesMenuLayout (lProp,lPerc) (rProp,rPerc) layout =
+--    renamed [Prepend "I(",Append ")"] $ wim (lProp,lPerc)
+--                                      $ wim (rProp,rPerc) $ layout
+--    where wim (pr,pe) l = renamed [CutWordsLeft 2] $ withIM (pe/100) pr $ reflectHoriz $ l
+
+--layoutDrawerD d p   = layoutDrawerT d (0,(1/3)) p (Tall 1 (2/100) (6/10)) layoutTiled
+--layoutDrawerT d (sc,so) p dl l = case d of L -> draw `onLeft` l
+--                                           D -> draw `onBottom` l
+--                                           U -> draw `onTop` l
+--                                           R -> draw `onRight` l
+--                                 where draw = drawer sc so p dl
 --twoCols (n,r,right) = renamed [Replace n] $ combineTwoP (TwoPane (2/100) (65/100)) (Column 1.8 ||| Full) right (Role r)
-
---grid        = renamed [Replace "Grid"]      $ spacing 2 $ GridRatio (1/2)
-
---bothSidesMenuLayout l r = withIM (15/100) (Resource l) $ reflectHoriz $
---                          withIM (15/100) (Resource r) $ reflectHoriz $ grid
-
--- Complete
 --uniLayout   = twoCols ("Uni Layout", "uni-gvim", rightPane)
 --    where rightPane = Accordion ||| XMonad.Layout.Tabbed.tabbedAlways XMonad.Layout.Tabbed.shrinkText myTabConfig
--- myIMLayout   = bothSidesMenuLayout "buddy_list" "pspeder - skype™"
 
+--------------------------
+--        MISC          --
+--------------------------
 {-
 myDefaultTabbedConfig :: Theme
 myDefaultTabbedConfig = defaultTheme

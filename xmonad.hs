@@ -17,6 +17,8 @@ import XMonad.Actions.TopicSpace (checkTopicConfig)
 import XMonad.Util.EZConfig (additionalKeysP,removeKeysP)
 import XMonad.Util.WindowProperties (Property(..))
 import XMonad.Hooks.ManageDocks (manageDocks)
+import XMonad.Hooks.InsertPosition (insertPosition,Focus(..),Position(..))
+import XMonad.Hooks.DynamicHooks (dynamicMasterHook)
 import XMonad.Actions.GridSelect (defaultGSConfig) --Will be replaced by something in PSP.Configs
 import XMonad.Layout.LayoutHints (hintsEventHook)
 import XMonad.Layout.Maximize (maximizeRestore)
@@ -44,26 +46,29 @@ main = do
     checkTopicConfig myTopics myTopicConfig
     xmonad $ myConfig d
 
+urxvtEventHook e = case e of
+    PropertyEvent { ev_window = w } -> do isURXVT <- runQuery (className =? "URxvt") w
+                                          if not isURXVT then hintsEventHook e
+                                                         else return (All True)
+    _                               -> return (All True)
+
 startupApps = [spawn "urxvt"]--[spawn "pidgin"], safeSpawn "apulse32" ["skype"]]
+
+topicStartupHook = ewmhDesktopsStartup <+> setWMName "LG3D" <+> mconcat startupApps
+
 myConfig d =
-    withUrgencyHookC LibNotifyUrgencyHook urgencyConfig {suppressWhen = OnScreen, remindWhen = Repeatedly 5 90} $
+    withUrgencyHookC LibNotifyUrgencyHook
+                     urgencyConfig { suppressWhen = OnScreen
+                                   , remindWhen = Repeatedly 5 90 } $
     ewmh $ defaultConfig
         { modMask           = mod4Mask
         , terminal          = "urxvtcd"
         , workspaces        = myTopics
-        , startupHook       = do ewmhDesktopsStartup
-                                 setWMName "LG3D"
-                                 setDefaultCursor xC_left_ptr
-                                 --fmap (whenJust . spawn) startupApps
-                                 mconcat startupApps -- requires at least one startupApp
-                                 return ()
-        , handleEventHook   = ewmhDesktopsEventHook <+> fullscreenEventHook <+>
-                    (\e -> case e of
-                        PropertyEvent{ ev_window = w } -> do
-                            isURXVT <- runQuery (className =? "URxvt") w
-                            if not isURXVT then hintsEventHook e else return (All True)
-                        _ -> return (All True))
-        , manageHook        = manageHook defaultConfig <+> manageDocks <+> pspNamedScratchpadManageHook <+>
+        , startupHook       = topicStartupHook <+> setDefaultCursor xC_left_ptr
+        , handleEventHook   = ewmhDesktopsEventHook <+> fullscreenEventHook <+> urxvtEventHook
+        , manageHook        = manageHook defaultConfig <+> dynamicMasterHook <+>
+                              insertPosition Below Newer <+> manageDocks <+>
+                              pspNamedScratchpadManageHook <+>
                               myManageHook [(ClassName "Gimp")]     -- ts
                                            []                       -- fs
                                            [(ClassName "Skype" `And` Title "Options")] -- cfs

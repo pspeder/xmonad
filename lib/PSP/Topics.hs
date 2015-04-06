@@ -33,7 +33,7 @@ myTopicDefs =
         { tdName            = "1:main"  -- Workspace name
         , tdAction          = -- X () action to spawn when workspace is chosen
                               spawnShell >*> 2
-        , tdActionOnStartup   = False     -- Should action be run on XMonad start?
+        , tdActionOnStartup = False     -- Should action be run on XMonad start?
         , tdActionOnFocus   = False     -- Should it be run when ws is selected?
         , tdHidden          = False     -- Should the workspace be hidden
         , tdDir             = "/home/psp"-- X.A.TopicSpace directory
@@ -53,7 +53,7 @@ myTopicDefs =
   , TopicDefinition
         { tdName            = "2:misc"
         , tdAction          = return ()
-        , tdActionOnStartup   = False
+        , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp"
