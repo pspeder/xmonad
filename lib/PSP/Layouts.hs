@@ -1,4 +1,4 @@
-{-# LANGUAGE TypeSynonymInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
+{-# LANGUAGE TypeSynonymInstances,MultiParamTypeClasses #-}
 {-# OPTIONS_GHC -w
  -fno-warn-missing-signatures
 #-}
@@ -10,8 +10,10 @@ module PSP.Layouts
 )
 where
 
-import XMonad
-import XMonad.Layout
+import XMonad hiding ((|||))
+import XMonad.Layout hiding ((|||))
+import XMonad.Layout.LayoutModifier
+import XMonad.Layout.LayoutCombinators
 -- Utilities
 import XMonad.Hooks.ManageDocks (avoidStruts, ToggleStruts(..))
 import XMonad.Layout.BoringWindows (boringWindows)
@@ -48,6 +50,8 @@ import XMonad.Layout.TwoPane                                  -- -- || --
 import XMonad.Layout.Column                                   -- A single column
 import qualified XMonad.Util.WindowProperties as WP
 
+import qualified PSP.Topics.Utils as TU
+
 --------------------------
 --    MAIN LAYOUTHOOK   --
 --------------------------
@@ -65,22 +69,20 @@ myTopicLayoutHook =
     onWorkspace "server" (workspaceDir "~/srv"          $ myStandardLayout  )$
     onWorkspace "configs" (workspaceDir "~/dev/Configs" $ myStandardLayout  )$
     myStandardLayout
-    where mailL  = layoutFullscreenFull ||| withSpacing layoutMTallD
+    where mailL  = layoutFullscreenFull ||| layoutMTallD
           devL   = let masterL = TwoPane resizePercentage (77/100)
                        editorL = layoutStackTile 1 (9/10)
                        comboL l= combineTwoP masterL editorL l props
                        pdfsL   = myStandardLayout
-                       codeL   = layoutStackTileD
+                       codeL   = layoutMTallD
                        props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
                                                    `And` Resource "editorterm")
-
                        pdfEditor = renamed [ CutWordsLeft 1, CutWordsRight 11
                                            , Prepend "p(", Append ")"] $ comboL pdfsL
                        codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
                                            , Prepend "c(", Append ")"] $ comboL codeL
                    in codeEditor ||| pdfEditor
-          webL   = withSpacing (layoutCircle ||| layoutGrid (4/3) ||| layoutCrossD)
-               ||| layoutFullscreenFull
+          webL   = layoutCircle ||| layoutGrid (4/3) ||| layoutCrossD ||| layoutFullscreenFull
           chatL  = renamed [CutWordsLeft 2]
                  $ withIM (15/100) (ClassName "Skype" `And` Resource "pspeder - skype™")
                  $ reflectHoriz
@@ -94,7 +96,7 @@ myTopicLayoutHook =
                  $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz
                  $ layoutGridD
 
-myStandardLayout = withSpacing (layoutTallD ||| layoutMTallD) ||| layoutFullscreenFull
+myStandardLayout = layoutTallD ||| layoutMTallD ||| layoutFullscreenFull
 
 resizePercentage = (2/100)
 withSpacing      = lAddSpacing layoutSpacing
@@ -104,13 +106,13 @@ layoutMasterSize = (6/10)
 --------------------------
 -- LAYOUTS W. DEFAULTS  --
 --------------------------
-layoutTallD             = layoutTall 1 layoutMasterSize
-layoutMTallD            = layoutMTall 1 layoutMasterSize
-layoutStackTileD        = layoutStackTile 1 (6/10)
-layoutCrossD            = layoutCross (5/6)
-layoutGridD             = layoutGrid (1/2)
-layoutAccordionD        = layoutAccordion
-layoutDishesD           = layoutDishes 1 layoutMasterSize
+layoutTallD         = layoutTall 1 layoutMasterSize
+layoutMTallD        = layoutMTall 1 layoutMasterSize
+layoutStackTileD    = layoutStackTile 1 (6/10)
+layoutCrossD        = layoutCross (5/6)
+layoutGridD         = layoutGrid (1/2)
+layoutAccordionD    = layoutAccordion
+layoutDishesD       = layoutDishes 1 layoutMasterSize
 
 --------------------------
 --   (NAMED) LAYOUTS    --
@@ -150,6 +152,57 @@ lAddSpacing s l = renamed [CutWordsLeft 2] $ spacing s $ l
 --------------------------
 --        MISC          --
 --------------------------
+--topicLayoutHook :: (LayoutClass l1 a, LayoutClass l2 a) => Layout (l1 a) -> TU.TopicDefinitions -> PerWorkspace l1 l2 a
+--topicLayoutHook acc (TU.TopicDefinition {TU.tdName = n, TU.tdDir = d, TU.tdBoundLayout = l}:rest)
+--    | null rest = windowNavigation
+--                . avoidStruts
+--                . trackFloating
+--                . boringWindows
+--                . renamed [CutWordsLeft 1]
+--                . maximize $ acc . onWorkspace n (workspaceDir d l) $ workspaceDir "~" myStandardLayout
+--    | otherwise = topicLayoutHook (acc . onWorkspace n (workspaceDir d l)) rest
+--
+--topicLayoutHook' ts = windowNavigation
+--                    . avoidStruts
+--                    . trackFloating
+--                    . boringWindows
+--                    . renamed [CutWordsLeft 1]
+--                    . maximize $
+--        foldr1 (.) (fmap (\TU.TopicDefinition {TU.tdName = n, TU.tdDir = d, TU.tdBoundLayout = l} -> onWorkspace n (workspaceDir d l)) ts) $ workspaceDir "~" myStandardLayout
+
+-- from: https://mail.haskell.org/pipermail/xmonad/2012-October/013139.html
+--format (w:[]) = workspace w defaultWorkspace
+--          format (w:ws) = workspace w $ format ws
+--
+--          workspace (name, dir, layouts) = onWorkspace name layouts $ modWorkspace name (workspaceDir dir)
+
+--topicLayoutHook ts =
+--      (foldr ($)  myStandardLayout (fmap (\TU.TopicDefinition{TU.tdName = n, TU.tdBoundLayout = l, TU.tdDir = d} -> onWorkspace n (workspaceDir d $ manage l)) ts))
+--        where manage = windowNavigation
+--                     . avoidStruts
+--                     . trackFloating
+--                     . boringWindows
+--                     . renamed [CutWordsLeft 1]
+--                     . maximize
+      --layouts ts $ myStandardLayout
+      --where layouts ts' = map (\TU.TopicDefinition{TU.tdName = n, TU.tdBoundLayout = l, TU.tdDir = d} -> onWorkspace n (workspaceDir d l)) ts'
+
+-- topicLayoutHook' ts =
+--     let layouts (td::[]) fl = onWorkspace n (workspaceDir d l) $ fl
+--             where n = TU.tdName td
+--                   d = TU.tdDir  td
+--                   l = TU.tdBoundLayout td
+--         layouts (td::ts) fl = layouts ts (onWorkspace n (workspaceDir d l) $ fl)
+--             where n = TU.tdName td
+--                   d = TU.tdDir  td
+--                   l = TU.tdBoundLayout td
+--     in windowNavigation
+--      . avoidStruts
+--      . trackFloating
+--      . boringWindows
+--      . renamed [CutWordsLeft 1]
+--      . maximize
+--      $ layouts ts myStandardLayout
 {-
 myDefaultTabbedConfig :: Theme
 myDefaultTabbedConfig = defaultTheme

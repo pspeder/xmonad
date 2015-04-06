@@ -1,7 +1,22 @@
+{-# LANGUAGE
+    Rank2Types
+  , NoMonomorphismRestriction
+  , MonoLocalBinds
+  , MultiParamTypeClasses
+  , DataKinds
+  , GADTs
+  , FunctionalDependencies
+  , KindSignatures
+  , FlexibleInstances
+  , UndecidableInstances
+  , PolyKinds
+  , TypeOperators
+  , FlexibleContexts
+  , TypeFamilies
+  #-}
 module PSP.Topics.Utils
 ( TopicDefinition(..)
 , TopicDefinitions
-, defaultTopicDefinition
 , topics
 , numberedTopics
 , topicDirs'
@@ -12,6 +27,8 @@ module PSP.Topics.Utils
 
 import XMonad
 import XMonad.Layout
+import XMonad.Layout.LayoutModifier
+import XMonad.Layout.LayoutCombinators (NewSelect(..))
 -- Imports we replace
 import           XMonad.Actions.TopicSpace      (Dir,Topic,TopicConfig(..),switchTopic,topicAction)
 -- Utilities
@@ -41,7 +58,7 @@ data TopicDefinition = TopicDefinition
     , tdBoundApps      :: ![Property]           -- ^ XProperties to tie in ManageHook
     , tdKeyBindings    :: ![(String, X())]      -- ^ Keys that should enabled on ws list of (key, app)s
     -- Unsure of actual type below (Possibly ModifiedLayout a l)
-    --, tdBoundLayout :: !(l Window)            -- ^ The layout "hook" to be used on ws
+    --, tdBoundLayout    :: LayoutClass l a => Layout (l a)
     -- Possible TODO :
     --  Add support for some of following:
     --    - Mouse bindings
@@ -51,18 +68,6 @@ data TopicDefinition = TopicDefinition
 type TopicDefinitions = [TopicDefinition]
 
 --defaultTopicDefinition :: (Eq TopicDefinition, Ord TopicDefinition) => TopicDefinition
-defaultTopicDefinition = TopicDefinition
-                     { tdName           = "1:main"
-                     , tdAction         = return ()
-                     , tdActionOnStartup= False
-                     , tdActionOnFocus  = False
-                     , tdHidden         = False
-                     , tdDir            = "~"
-                     , tdMenuApps       = [("Terminal", "urxvtc")]
-                     , tdBoundApps      = []
-                     , tdKeyBindings    = []
-                     --, tdBoundLayout    = myStandardLayout
-                     }
 
 -- Exported Functions
 ---------------------

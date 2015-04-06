@@ -26,6 +26,19 @@ import PSP.Constants        -- Will be replaced be a ProgSetup record.
 import PSP.Layouts    (myStandardLayout,myTopicLayoutHook)
 import PScratchpads
 
+defaultTopicDefinition = TopicDefinition
+                     { tdName           = "1:main"
+                     , tdAction         = return ()
+                     , tdActionOnStartup= False
+                     , tdActionOnFocus  = False
+                     , tdHidden         = False
+                     , tdDir            = "~"
+                     , tdMenuApps       = [("Terminal", "urxvtc")]
+                     , tdBoundApps      = []
+                     , tdKeyBindings    = []
+                     -- , tdBoundLayout    = myStandardLayout
+                     }
+
 myTopicDefs :: TopicDefinitions
 myTopicDefs =
   [
@@ -44,7 +57,8 @@ myTopicDefs =
                               , ("Editor"    , myEditor    ) ]
         , tdKeyBindings     = -- KeyBindings that are bound to this workspace
                               [ ("M-z", spawnShell ) ]
-        --, tdBoundLayout     = -- Possibly @ModifiedLayout a l@, unsure of actual type, though
+        -- , tdBoundLayout     = myStandardLayout
+                                -- Possibly @ModifiedLayout a l@, unsure of actual type, though
         --                      -- For now just make a custom a one.
         --                      -- See LayoutHook in xmonad.hs or compose one (possibly with
         --                      -- examples from PSP.Layouts).
@@ -60,7 +74,7 @@ myTopicDefs =
         , tdBoundApps       = []
         , tdMenuApps        = [] -- Should probably be a shit load here...
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "3:organiser"
@@ -75,7 +89,7 @@ myTopicDefs =
                               , ("Mail (mutt)"      , "mutt"                    )
                               , ("Notes"            , "urxvt -cd '/home/psp/notes' -e vim -c ':e .'") ]
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "4:dev"
@@ -108,12 +122,12 @@ myTopicDefs =
         , tdKeyBindings     = [ ("M-<Tab>"       , rotSlavesDown   )
                               , ("M-S-<Tab>"     , rotSlavesUp     )
                               , ("M-t"           , namedScratchpadAction myScratches "editorterm")] -- won't need to push stuff into tiling here.
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "5:www"
         , tdAction          = spawn myBrowser
-        , tdActionOnStartup   = False
+        , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/downloads"
@@ -134,12 +148,12 @@ myTopicDefs =
                               , ("Xombrero"   , "xombrero"      ) ]
         , tdKeyBindings     = [ ("M-n"  , spawn' myBrowserNewWindow  )
                               , ("M-S-n", spawn' myBrowserPrivateWin ) ]
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "6:chat"
         , tdAction          = spawn' "pidgin" >> spawn "apulse32 skype"
-        , tdActionOnStartup   = True
+        , tdActionOnStartup = True
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/downloads"
@@ -149,12 +163,12 @@ myTopicDefs =
         , tdMenuApps        = [ ("Skype" , "skype" )
                               , ("Pidgin", "pidgin") ]
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myIMLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "7:vms"
         , tdAction          = spawn' "virtualbox"
-        , tdActionOnStartup   = False
+        , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/vms"
@@ -163,12 +177,12 @@ myTopicDefs =
                               , ("Win7 VM"   , "virtualbox --startvm win7"   )
                               , ("fedbox VM" , "virtualbox --startvm fedbox" ) ]
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "8:media"
         , tdAction          = spawn' "gimp"
-        , tdActionOnStartup   = False
+        , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/images"
@@ -179,12 +193,12 @@ myTopicDefs =
                               , ("Pitivi"  , "pitivi")
                               , ("LiVES"   , "lives" ) ]
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "server"
         , tdAction          = spawnShell >> spawn "beastmouse"
-        , tdActionOnStartup   = False
+        , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = True
         , tdDir             = "/home/psp/shares"
@@ -194,12 +208,12 @@ myTopicDefs =
                               , ("M-S-m s", spawn "ssh beast 'mpc stop'"  )
                               , ("M-S-m f", spawn "ssh beast 'mpc next'"  )
                               , ("M-S-m b", spawn "ssh beast 'mpc prev'"  ) ]
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "remotes"
         , tdAction          = spawnShell >*> 5 -- possibly terminals to five most used connections
-        , tdActionOnStartup   = False
+        , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = True
         , tdDir             = "/home/psp/shares"
@@ -210,7 +224,7 @@ myTopicDefs =
                               , ("QSynergy"   , "qsynergy"    )
                               , ("Teamviewer" , "teamviewer"  ) ]
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
         { tdName            = "configs"
@@ -222,7 +236,7 @@ myTopicDefs =
         , tdBoundApps       = []
         , tdMenuApps        = []
         , tdKeyBindings     = []
-        --, tdBoundLayout     = myStandardLayout
+        -- , tdBoundLayout     = myStandardLayout
         }
   ]
 
