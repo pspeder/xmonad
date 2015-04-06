@@ -1,8 +1,9 @@
-{-# LANGUAGE TypeSynonymInstances,MultiParamTypeClasses #-}
-{-# OPTIONS_GHC -w
- -fno-warn-missing-signatures
-#-}
- -- | 
+{-# LANGUAGE TypeSynonymInstances
+           , MultiParamTypeClasses
+           , FlexibleInstances #-}
+-- {-# OPTIONS_GHC -w
+--  -fno-warn-missing-signatures
+-- #-}
 module PSP.Layouts
 ( myTopicLayoutHook
 , myStandardLayout
@@ -56,50 +57,49 @@ import qualified PSP.Topics.Utils as TU
 --    MAIN LAYOUTHOOK   --
 --------------------------
 myTopicLayoutHook =
-    windowNavigation . avoidStruts . trackFloating . boringWindows . renamed [CutWordsLeft 1] . maximize $
-    onWorkspace "1:main" (workspaceDir "~"              $ myStandardLayout  )$
-    onWorkspace "2:misc" (workspaceDir "~"              $ myStandardLayout  )$
-    onWorkspace "3:organiser" (workspaceDir "~/mail"    $ mailL             )$
-    onWorkspace "4:dev" (workspaceDir "~/dev"           $ devL              )$
-    onWorkspace "5:www" (workspaceDir "~/downloads"     $ webL              )$
-    onWorkspace "6:chat" (workspaceDir "~/downloads"    $ chatL             )$
-    onWorkspace "7:vms" (workspaceDir "~/shares"        $ myStandardLayout  )$
-    onWorkspace "8:media" (workspaceDir "~/images"      $ mediaL            )$
-    onWorkspace "remotes" (workspaceDir "~/shares"      $ myStandardLayout  )$
-    onWorkspace "server" (workspaceDir "~/srv"          $ myStandardLayout  )$
-    onWorkspace "configs" (workspaceDir "~/dev/Configs" $ myStandardLayout  )$
-    myStandardLayout
-    where mailL  = layoutFullscreenFull ||| layoutMTallD
-          devL   = let masterL = TwoPane resizePercentage (77/100)
-                       editorL = layoutStackTile 1 (9/10)
-                       comboL l= combineTwoP masterL editorL l props
-                       pdfsL   = myStandardLayout
-                       codeL   = layoutMTallD
-                       props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
-                                                   `And` Resource "editorterm")
-                       pdfEditor = renamed [ CutWordsLeft 1, CutWordsRight 11
-                                           , Prepend "p(", Append ")"] $ comboL pdfsL
-                       codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
-                                           , Prepend "c(", Append ")"] $ comboL codeL
-                   in codeEditor ||| pdfEditor
-          webL   = layoutCircle ||| layoutGrid (4/3) ||| layoutCrossD ||| layoutFullscreenFull
-          chatL  = renamed [CutWordsLeft 2]
-                 $ withIM (15/100) (ClassName "Skype" `And` Resource "pspeder - skype™")
-                 $ reflectHoriz
-                 $ renamed [CutWordsLeft 2]
-                 $ withIM (17/100) (ClassName "Pidgin" `And` Role "buddy_list")
-                 $ reflectHoriz
-                 $ layoutGridD
-          mediaL = renamed [CutWordsLeft 2]
-                 $ withIM (19/100) (ClassName "gimp-dock") $ reflectHoriz
-                 $ renamed [CutWordsLeft 2]
-                 $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz
-                 $ layoutGridD
+    windowNavigation . avoidStruts . trackFloating . boringWindows . renamed [CutWordsLeft 1] . maximize .
+    set ("1:main"     , "~"             , myStandardLayout  ) .
+    set ("2:misc"     , "~"             , myStandardLayout  ) .
+    set ("3:organiser", "~/mail"        , layoutFullscreenFull
+                                      ||| layoutMTallD      ) .
+    set ("4:dev"      , "~/dev"         ,
+         let masterL = TwoPane resizePercentage (77/100)
+             editorL = layoutStackTile 1 (9/10)
+             comboL l= combineTwoP masterL editorL l props
+             pdfsL   = myStandardLayout
+             codeL   = layoutMTallD
+             props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
+                                         `And` Resource "editorterm")
+             pdfEditor = renamed [ CutWordsLeft 1, CutWordsRight 11
+                                 , Prepend "p(", Append ")"] $ comboL pdfsL
+             codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
+                                 , Prepend "c(", Append ")"] $ comboL codeL
+         in codeEditor ||| pdfEditor                        ) .
+    set ("5:www"        , "~/downloads" , layoutCircle
+                                      ||| layoutGrid (4/3)
+                                      ||| layoutCrossD
+                                      ||| layoutFullscreenFull  ) .
+    set ("6:chat"       , "~/downloads" ,
+         renamed [CutWordsLeft 2] $ withIM (15/100) (Resource "pspeder - skype™") $ reflectHoriz $
+         renamed [CutWordsLeft 2] $ withIM (17/100) (Role "buddy_list") $ reflectHoriz $
+         layoutGridD                                        ) .
+    set ("7:vms"        , "~/shares"    , layoutMTallD
+                                      ||| layoutCircle
+                                      ||| layoutCrossD      ) .
+    set ("8:media"      , "~/images"    ,
+         renamed [CutWordsLeft 2] $ withIM (19/100) (ClassName "gimp-dock") $ reflectHoriz $
+         renamed [CutWordsLeft 2] $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz $
+         layoutGridD             ) .
+    set ("remotes"      , "~/shares"    ,
+         lAddSDrawerL (ClassName "URxvt" `And` Role "drawerTerm")
+                      myStandardLayout                      ) .
+    set ("server"       , "~/srv"       , myStandardLayout  ) .
+    set ("configs"      , "~/dev/Configs",myStandardLayout  ) $ myStandardLayout
+    where set (n,d,l) = onWorkspace n ( workspaceDir d l )
 
 myStandardLayout = layoutTallD ||| layoutMTallD ||| layoutFullscreenFull
 
 resizePercentage = (2/100)
-withSpacing      = lAddSpacing layoutSpacing
 layoutSpacing    = 2
 layoutMasterSize = (6/10)
 
@@ -132,7 +132,12 @@ layoutDishes m p    = renamed [Replace "D"] $ Dishes m p
 --------------------------
 --  LAYOUT COMBINATORS  --
 --------------------------
+lAddSDrawerL p l  = simpleDrawer 0 layoutMasterSize p `onLeft` l
+lAddSDrawerB p l  = simpleDrawer 0 layoutMasterSize p `onBottom` l
+lAddSDrawerT p l  = simpleDrawer 0 layoutMasterSize p `onTop` l
+lAddSDrawerR p l  = simpleDrawer 0 layoutMasterSize p `onRight` l
 lAddSpacing s l = renamed [CutWordsLeft 2] $ spacing s $ l
+withSpacing      = lAddSpacing layoutSpacing
 --addedTabs s t l         = renamed [CutWordsLeft 2, Prepend "T(", Append ")"] $ spacing s $ addTabsAlways shrinkText t l
 --bothSidesMenuLayout (lProp,lPerc) (rProp,rPerc) layout =
 --    renamed [Prepend "I(",Append ")"] $ wim (lProp,lPerc)
@@ -152,6 +157,7 @@ lAddSpacing s l = renamed [CutWordsLeft 2] $ spacing s $ l
 --------------------------
 --        MISC          --
 --------------------------
+--ttt ts = (\TU.TopicDefinition {TU.tdName = n, TU.tdDir = d, TU.tdBoundLayout = l} -> (n,d,l)) ts
 --topicLayoutHook :: (LayoutClass l1 a, LayoutClass l2 a) => Layout (l1 a) -> TU.TopicDefinitions -> PerWorkspace l1 l2 a
 --topicLayoutHook acc (TU.TopicDefinition {TU.tdName = n, TU.tdDir = d, TU.tdBoundLayout = l}:rest)
 --    | null rest = windowNavigation
