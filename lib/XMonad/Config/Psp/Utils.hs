@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeSynonymInstances,MultiParamTypeClasses,DeriveDataTypeable #-}
-module PSP.Utils
+module XMonad.Config.Psp.Utils
 ( spawnIn
 , spawnShellIn
 , spawnSelected'
@@ -18,6 +18,8 @@ import Control.Monad (when)
 import System.Directory (setCurrentDirectory,getCurrentDirectory)
 import XMonad.Layout.LayoutModifier
 import Data.List(stripPrefix,partition)
+import XMonad.Actions.TopicSpace (Dir)
+import XMonad.Util.WindowProperties (Property(..))
 import qualified XMonad.StackSet as W (currentTag,greedyView,hidden,shift,stack,tag,visible,workspace)
 import XMonad.Actions.TopicSpace (switchTopic,TopicConfig)
 import XMonad.Actions.GridSelect (defaultGSConfig,gridselect,GSConfig(..))
@@ -41,6 +43,7 @@ instance LayoutModifier WorkspaceDir Window where
 workspaceDir :: LayoutClass l a => String -> l a
              -> ModifiedLayout WorkspaceDir l a
 workspaceDir s = ModifiedLayout (WorkspaceDir s)
+
 
 cleanDir :: String -> X String
 cleanDir x = scd x >> io getCurrentDirectory

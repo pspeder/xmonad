@@ -12,10 +12,14 @@
 --
 -- This version was downloaded from:
 --   https://github.com/wh5a/arch/blob/master/.xmonad/lib/FloatKeys.hs
--- ...so as to "disrespect" size hints
+--
+--   It is set to "disrespect" size hints rather than trying (and failing)
+--   to respect them (my problem was that the original module kept failing
+--   at resizing scratchpads).
+--
 -----------------------------------------------------------------------------
 
-module CustomFloatKeys (
+module XMonad.Actions.FloatKeys (
                 -- * Usage
                 -- $usage
                 keysMoveWindow,

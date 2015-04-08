@@ -1,20 +1,12 @@
-module CustomUrgencyHook
-( LibNotifyUrgencyHook(..)
-, withUrgencyHookC
-, withUrgencyHook
-, UrgencyConfig(..)
-, urgencyConfig
-, RemindWhen(..)
-, SuppressWhen(..)
-) where
+-- | From: https://github.com/br0ns/config/blob/master/xmonad-lib/XMonad/Hooks/UrgencyExtra.hs
+module XMonad.Hooks.LibNotifyUrgency (LibNotifyUrgencyHook(..)) where
 
 import XMonad (whenJust,windowset,gets)
-import XMonad.Hooks.UrgencyHook(RemindWhen(..),SuppressWhen(..),UrgencyHook(..),UrgencyConfig(..),urgencyConfig,withUrgencyHook,withUrgencyHookC)
+import XMonad.Hooks.UrgencyHook(UrgencyHook(..))
 import XMonad.Util.NamedWindows(getName)
 import XMonad.Util.Run(safeSpawn)
-import qualified XMonad.StackSet as W
+import qualified XMonad.StackSet as W (findTag)
 
--- | From: https://github.com/br0ns/config/blob/master/xmonad-lib/XMonad/Hooks/UrgencyExtra.hs
 data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
 
 instance UrgencyHook LibNotifyUrgencyHook where
@@ -27,3 +19,4 @@ instance UrgencyHook LibNotifyUrgencyHook where
               --then spawn "~/.xmonad/blink"
               --else
                 safeSpawn "notify-send" [index ++ ": " ++ show name]
+

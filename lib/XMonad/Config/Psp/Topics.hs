@@ -1,4 +1,4 @@
-module PSP.Topics
+module XMonad.Config.Psp.Topics
 ( -- * A number of functions to be used xmonad.hs
   myTopics
 , myTopicKeys
@@ -8,53 +8,70 @@ module PSP.Topics
 , myTopicActions
 , myTopicLayoutHook
 , myDefaultTopic
-, myManageHook
 , spawnShell
+, wsGo
 ) where
 
--- These imports are pretty much a minimum requirement.
-import XMonad (ManageHook(..),spawn,X(..))
-import qualified Data.Map as M (Map(..))
-import XMonad.Util.WindowProperties (Property(..))
-import PSP.Topics.Utils   -- Constructors and helper functions for a cleaner Topics.hs file
-import PSP.Utils      (spawnIn,spawnShellIn)
--- Some actions
-import XMonad.Actions.RotSlaves (rotSlavesUp,rotSlavesDown)
-import XMonad.Actions.TopicSpace ((>*>),currentTopicDir,defaultTopicConfig,Dir,Topic,TopicConfig(..))
+import qualified Data.Map as M                  ( Map(..) )
 
-import PSP.Constants        -- Will be replaced be a ProgSetup record.
-import PSP.Layouts    (myStandardLayout,myTopicLayoutHook)
-import PScratchpads
+import           XMonad                         ( ManageHook(..),spawn,X(..) )
+import           XMonad.Util.WindowProperties   ( Property(..) )
+import           XMonad.Actions.RotSlaves       (rotSlavesUp,rotSlavesDown)
+import qualified XMonad.Actions.TopicSpace as TS (currentTopicDir,defaultTopicConfig,Dir,Topic,TopicConfig(..))
+import           XMonad.Actions.TopicSpace      ( (>*>) )
 
-defaultTopicDefinition = TopicDefinition
-                     { tdName           = "1:main"
-                     , tdAction         = return ()
-                     , tdActionOnStartup= False
-                     , tdActionOnFocus  = False
-                     , tdHidden         = False
-                     , tdDir            = "~"
-                     , tdMenuApps       = [("Terminal", "urxvtc")]
-                     , tdBoundApps      = []
-                     , tdKeyBindings    = []
-                     -- , tdBoundLayout    = myStandardLayout
-                     }
+import           XMonad.Actions.TopicDefinitions
 
+import           XMonad.Config.Psp.Utils
+import           XMonad.Config.Psp.Configs
+import           XMonad.Config.Psp.Layouts      (myStandardLayout,myTopicLayoutHook)
+import           XMonad.Config.Psp.Scratchpads  (namedScratchpadAction, myScratches)
+
+--spawn' :: String -> X()
+--spawn' app = currentTopicDir myTopicConfig >>= (spawnIn app)
+
+spawn' :: String -> X()
+spawn' app = TS.currentTopicDir myTopicConfig >>= (spawner app)
+    where spawner :: String -> String -> X()
+          spawner app' dir = spawn $ "cd '" ++ dir ++ "' && '" ++ app' ++ "'"
+
+-- | As defined in documentation for the module X.A.GridSelect.
+--   Spawn a shell in the dir that is bound to current topic.
+spawnShell :: X ()
+spawnShell = TS.currentTopicDir myTopicConfig >>= spawnShellIn
+
+myTopics        = topics myTopicDefs            :: [TS.Topic]
+myTopicKeys     = topicEZKeys myTopicDefs myTopicConfig :: [(String, X())] -> [(String, X())]
+myNumberedTopics= numberedTopics myTopicDefs    :: [TS.Topic]
+myTopicDirs     = topicDirs myTopicDefs         :: M.Map TS.Topic TS.Dir
+myDefaultTopic  = head myTopics                 :: TS.Topic
+myTopicActions  = topicActions myTopicDefs      :: M.Map TS.Topic (X())
+
+wsGo = goToSelectedWS myTopicConfig
+
+myTopicConfig :: TS.TopicConfig
+myTopicConfig = TS.defaultTopicConfig
+  { TS.topicDirs           = myTopicDirs
+  , TS.defaultTopicAction  = const $ return ()
+  , TS.defaultTopic        = myDefaultTopic
+  , TS.topicActions        = myTopicActions
+  }
 myTopicDefs :: TopicDefinitions
 myTopicDefs =
   [
     TopicDefinition
         { tdName            = "1:main"  -- Workspace name
+        , tdDir             = "/home/psp"-- X.A.TopicSpace directory
         , tdAction          = -- X () action to spawn when workspace is chosen
                               spawnShell >*> 2
         , tdActionOnStartup = False     -- Should action be run on XMonad start?
         , tdActionOnFocus   = False     -- Should it be run when ws is selected?
         , tdHidden          = False     -- Should the workspace be hidden
-        , tdDir             = "/home/psp"-- X.A.TopicSpace directory
         , tdBoundApps       = []        -- X Property of apps that should spawn on this workspace
         , tdMenuApps        = -- Apps that can be launched via ws menu
-                              [ ("Terminal"  , myTerminal  )
-                              , ("PDF Viewer", myPDFViewer )
-                              , ("Editor"    , myEditor    ) ]
+                              [ ("Terminal"  , taTerminal progs)
+                              , ("PDF Viewer", taPDF progs     )
+                              , ("Editor"    , taEditor progs  ) ]
         , tdKeyBindings     = -- KeyBindings that are bound to this workspace
                               [ ("M-z", spawnShell ) ]
         -- , tdBoundLayout     = myStandardLayout
@@ -66,11 +83,11 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "2:misc"
+        , tdDir             = "/home/psp"
+        , tdHidden          = False
         , tdAction          = return ()
         , tdActionOnStartup = False
         , tdActionOnFocus   = False
-        , tdHidden          = False
-        , tdDir             = "/home/psp"
         , tdBoundApps       = []
         , tdMenuApps        = [] -- Should probably be a shit load here...
         , tdKeyBindings     = []
@@ -78,15 +95,15 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "3:organiser"
-        , tdAction          = spawn' myMailClient
+        , tdAction          = spawn' $ taMail progs
         , tdActionOnStartup = True
         , tdActionOnFocus   = False
         , tdHidden          = False
         , tdDir             = "/home/psp/mail"
         , tdBoundApps       = [ ClassName "Thunderbird"
                               , Resource "mutt" ]
-        , tdMenuApps        = [ ("Mail and Calendar", "thunderbird"             )
-                              , ("Mail (mutt)"      , "mutt"                    )
+        , tdMenuApps        = [ ("Mail and Calendar", taMailCalendar progs     )
+                              , ("Mail (mutt)"      , taMail progs             )
                               , ("Notes"            , "urxvt -cd '/home/psp/notes' -e vim -c ':e .'") ]
         , tdKeyBindings     = []
         -- , tdBoundLayout     = myStandardLayout
@@ -117,7 +134,7 @@ myTopicDefs =
                               , ("Sublime Text 2", "subl"                             )
                               , ("Notepadqq"     , "notepadqq"                        )
                               , ("IntelliJ"      , "intellij-idea-ultimate-edition"   )
-                              , ("PDF Viewer"    , myPDFViewer                        )
+                              , ("PDF Viewer"    , taPDF progs                       )
                               , ("PDF Viewer"    , "mupdf"                            ) ]
         , tdKeyBindings     = [ ("M-<Tab>"       , rotSlavesDown   )
                               , ("M-S-<Tab>"     , rotSlavesUp     )
@@ -126,7 +143,7 @@ myTopicDefs =
         }
   , TopicDefinition
         { tdName            = "5:www"
-        , tdAction          = spawn myBrowser
+        , tdAction          = spawn $ taBrowser progs
         , tdActionOnStartup = False
         , tdActionOnFocus   = False
         , tdHidden          = False
@@ -146,8 +163,9 @@ myTopicDefs =
                               , ("Opera"      , "opera"         )
                               , ("Vimprobable", "vimprobable"   )
                               , ("Xombrero"   , "xombrero"      ) ]
-        , tdKeyBindings     = [ ("M-n"  , spawn' myBrowserNewWindow  )
-                              , ("M-S-n", spawn' myBrowserPrivateWin ) ]
+        , tdKeyBindings     = [ ("M-b w", spawn' $ taBrowserWin progs   )
+                              , ("M-b t", spawn' $ taBrowserTab progs   )
+                              , ("M-b p", spawn' $ taPBrowserWin progs  ) ]
         -- , tdBoundLayout     = myStandardLayout
         }
   , TopicDefinition
@@ -239,39 +257,3 @@ myTopicDefs =
         -- , tdBoundLayout     = myStandardLayout
         }
   ]
-
---spawn' :: String -> X()
---spawn' app = currentTopicDir myTopicConfig >>= (spawnIn app)
-
-spawn' :: String -> X()
-spawn' app = currentTopicDir myTopicConfig >>= (spawner app)
-    where spawner :: String -> String -> X()
-          spawner app' dir = spawn $ "cd '" ++ dir ++ "' && '" ++ app' ++ "'"
-
--- | As defined in documentation for the module X.A.GridSelect.
---   Spawn a shell in the dir that is bound to current topic.
-spawnShell :: X ()
-spawnShell = currentTopicDir myTopicConfig >>= spawnShellIn
-
-myTopics        = topics myTopicDefs            :: [Topic]
-myTopicKeys     = topicEZKeys myTopicDefs myTopicConfig :: [(String, X())] -> [(String, X())]
-myManageHook    = topicManageHook myTopicDefs   :: [Property]
-                                                -> [Property]
-                                                -> [Property]
-                                                -> [Property]
-                                                -> [Property]
-                                                -> [(Property, Topic)]
-                                                -> ManageHook
-myNumberedTopics= numberedTopics myTopicDefs    :: [Topic]
-myTopicDirs     = topicDirs' myTopicDefs        :: M.Map Topic Dir
-myDefaultTopic  = head myTopics                 :: Topic
-myTopicActions  = topicActions' myTopicDefs     :: M.Map Topic (X())
-
-myTopicConfig :: TopicConfig
-myTopicConfig = defaultTopicConfig
-  { topicDirs           = myTopicDirs
-  , defaultTopicAction  = const $ return ()
-  , defaultTopic        = myDefaultTopic
-  , topicActions        = myTopicActions
-  }
-

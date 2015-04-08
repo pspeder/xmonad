@@ -1,10 +1,9 @@
 {-# LANGUAGE TypeSynonymInstances
            , MultiParamTypeClasses
-           , FlexibleInstances #-}
--- {-# OPTIONS_GHC -w
---  -fno-warn-missing-signatures
--- #-}
-module PSP.Layouts
+           , FlexibleInstances
+           , FlexibleContexts #-}
+{-# OPTIONS_GHC -w -fno-warn-missing-signatures #-}
+module XMonad.Config.Psp.Layouts
 ( myTopicLayoutHook
 , myStandardLayout
 , ToggleLayouts(..)
@@ -31,6 +30,7 @@ import XMonad.Layout.Renamed
 import XMonad.Layout.ToggleLayouts
 import XMonad.Util.Types (Direction2D(..))
 -- Layouts
+import XMonad.Layout.CenteredMaster
 import XMonad.Layout.Grid (Grid(GridRatio))
 import XMonad.Layout.Cross
 import XMonad.Layout.Drawer
@@ -51,32 +51,33 @@ import XMonad.Layout.TwoPane                                  -- -- || --
 import XMonad.Layout.Column                                   -- A single column
 import qualified XMonad.Util.WindowProperties as WP
 
-import qualified PSP.Topics.Utils as TU
+--import qualified PSP.Topics.Utils as TU
 
 --------------------------
 --    MAIN LAYOUTHOOK   --
 --------------------------
 myTopicLayoutHook =
     windowNavigation . avoidStruts . trackFloating . boringWindows . renamed [CutWordsLeft 1] . maximize .
-    set ("1:main"     , "~"             , myStandardLayout  ) .
+    set ("1:main"     , "~"             , topRightMaster myStandardLayout  ) .
     set ("2:misc"     , "~"             , myStandardLayout  ) .
     set ("3:organiser", "~/mail"        , layoutFullscreenFull
                                       ||| layoutMTallD      ) .
     set ("4:dev"      , "~/dev"         ,
          let masterL = TwoPane resizePercentage (77/100)
              editorL = renamed [CutWordsLeft 1]
-                     $ layoutHintsWithPlacement (0.5, 0.5)
+                     . layoutHintsWithPlacement (0.5, 0.5)
+                     . noBorders
                      $ layoutStackTile 1 (9/10)
              comboL l= combineTwoP masterL editorL l props
              pdfsL   = myStandardLayout
-             codeL   = layoutMTallD
+             codeL   = layoutMTallD ||| layoutSTabbedD
              props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
                                          `And` Resource "editorterm")
              pdfEditor = renamed [ CutWordsLeft 1, CutWordsRight 11
                                  , Prepend "p(", Append ")"] $ comboL pdfsL
              codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
                                  , Prepend "c(", Append ")"] $ comboL codeL
-         in codeEditor ||| pdfEditor                        ) .
+         in codeEditor ||| pdfEditor                            ) .
     set ("5:www"        , "~/downloads" , layoutCircle
                                       ||| layoutGrid (4/3)
                                       ||| layoutCrossD
@@ -85,9 +86,9 @@ myTopicLayoutHook =
          renamed [CutWordsLeft 2] $ withIM (15/100) (Resource "pspeder - skype™") $ reflectHoriz $
          renamed [CutWordsLeft 2] $ withIM (17/100) (Role "buddy_list") $ reflectHoriz $
          layoutGridD                                        ) .
-    set ("7:vms"        , "~/shares"    , layoutMTallD
+    set ("7:vms"        , "~/shares"    , centerMaster (layoutMTallD
                                       ||| layoutCircle
-                                      ||| layoutCrossD      ) .
+                                      ||| layoutCrossD)     ) .
     set ("8:media"      , "~/images"    ,
          renamed [CutWordsLeft 2] $ withIM (19/100) (ClassName "gimp-dock") $ reflectHoriz $
          renamed [CutWordsLeft 2] $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz $
@@ -96,10 +97,11 @@ myTopicLayoutHook =
          lAddSDrawerL (ClassName "URxvt" `And` Role "drawerTerm")
                       myStandardLayout                      ) .
     set ("server"       , "~/srv"       , myStandardLayout  ) .
-    set ("configs"      , "~/dev/Configs",myStandardLayout  ) $ myStandardLayout
+    set ("configs"      , "~/dev/Configs",myStandardLayout  ) $
+    workspaceDir "~" myStandardLayout
     where set (n,d,l) = onWorkspace n ( workspaceDir d l )
 
-myStandardLayout = layoutTallD ||| layoutMTallD ||| layoutFullscreenFull
+myStandardLayout = smartBorders (layoutTallD ||| layoutMTallD ||| layoutFullscreenFull)
 
 resizePercentage = (2/100)
 layoutSpacing    = 2
@@ -134,13 +136,14 @@ layoutDishes m p    = renamed [Replace "D"] $ Dishes m p
 --------------------------
 --  LAYOUT COMBINATORS  --
 --------------------------
+lAddSpacingD      = lAddSpacing layoutSpacing
+
 lAddSDrawerL p l  = simpleDrawer 0 layoutMasterSize p `onLeft` l
 lAddSDrawerB p l  = simpleDrawer 0 layoutMasterSize p `onBottom` l
 lAddSDrawerT p l  = simpleDrawer 0 layoutMasterSize p `onTop` l
 lAddSDrawerR p l  = simpleDrawer 0 layoutMasterSize p `onRight` l
-lAddSpacing s l = renamed [CutWordsLeft 2] $ spacing s $ l
-withSpacing      = lAddSpacing layoutSpacing
---addedTabs s t l         = renamed [CutWordsLeft 2, Prepend "T(", Append ")"] $ spacing s $ addTabsAlways shrinkText t l
+lAddSpacing s l   = renamed [CutWordsLeft 2] $ spacing s $ l
+lAddTabs s t l    = renamed [CutWordsLeft 2, Prepend "T(", Append ")"] $ spacing s $ addTabsAlways shrinkText t l
 --bothSidesMenuLayout (lProp,lPerc) (rProp,rPerc) layout =
 --    renamed [Prepend "I(",Append ")"] $ wim (lProp,lPerc)
 --                                      $ wim (rProp,rPerc) $ layout

@@ -1,4 +1,4 @@
-module PScratchpads
+module XMonad.Config.Psp.Scratchpads
 ( pspNamedScratchpadManageHook
 , NamedScratchpads
 , namedScratchpadAction

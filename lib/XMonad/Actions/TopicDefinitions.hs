@@ -14,91 +14,194 @@
   , FlexibleContexts
   , TypeFamilies
   #-}
-module PSP.Topics.Utils
+module XMonad.Actions.TopicDefinitions
 ( TopicDefinition(..)
 , TopicDefinitions
+, defaultTopicDefinition
+, Key(..)
+, TDConfig(..)
+, defaultTDConfig
 , topics
 , numberedTopics
-, topicDirs'
-, topicActions'
+, topicStartupHook
+, topicDirs
+, topicActions
 , topicEZKeys
 , topicManageHook
+, ProgSetup(..)
 ) where
 
 import XMonad
 import XMonad.Layout
 import XMonad.Layout.LayoutModifier
 import XMonad.Layout.LayoutCombinators (NewSelect(..))
--- Imports we replace
-import           XMonad.Actions.TopicSpace      (Dir,Topic,TopicConfig(..),switchTopic,topicAction)
+
+import qualified XMonad.Actions.TopicSpace as TS(Dir,Topic,TopicConfig(..)
+                                                ,switchTopic,topicAction
+                                                ,checkTopicConfig,defaultTopicConfig)
 -- Utilities
 import qualified Data.Map as M                  (fromList,Map(..))
-import           Data.List                      (sortBy)
+import           Data.List                      (sortBy,isSuffixOf)
 import           Data.Char                      (isDigit)
-import qualified XMonad.StackSet as W           (focusDown,greedyView,shift,shiftMaster,sink,view)
+import           Data.Monoid                    (mempty, mappend, All(..))
+import           Graphics.X11.Types             ( KeySym(..), ButtonMask(..) )
+
+import qualified XMonad.StackSet as W           (focusDown,greedyView,shift,shiftMaster,sink,view,Workspace(..))
+import           XMonad.Actions.DynamicWorkspaces (addHiddenWorkspace)
 import           XMonad.Layout.PerWorkspace     (onWorkspace)
 import           XMonad.Util.WindowProperties   (Property(..),propertyToQuery)
 -- Hooks
 import           XMonad.ManageHook
 import           XMonad.Hooks.ManageHelpers
+import           XMonad.Hooks.DynamicLog (PP(..),defaultPP,shorten,pad,dzenStrip,dzenColor,wrap,dzenPP,dzenEscape,dynamicLogWithPP,ppOutput)
 -- Actions
 import           XMonad.Actions.PerWorkspaceKeys(bindOn)
 -- Own modules
-import           PSP.Utils                      (spawnSelected',changeDir)
+import           XMonad.Config.Psp.Utils (spawnSelected',changeDir)
 
+-- | A wrapper type to allow the use of both EZConfig keys as well as keys with types from Xlib
+data Key = EZKey String | XKey (KeyMask, KeySym)
+
+-- | A TopicDefinition holds information regarding a workspace/topic/desktop.
+-- Possible TODO :
+--    - Mouse bindings
+--    - Scratchpads
 data TopicDefinition = TopicDefinition
-    { tdName           :: !Topic                -- ^ Identifier
+    { tdName           :: !TS.Topic             -- ^ Identifier
+    , tdDir            :: !TS.Dir               -- ^ Directory the spawning shell should spawn from.
+                                                -- If none given, use tdcDefaultDir of config.
+    , tdHidden         :: !Bool                 -- ^ Superflous for now. Decide whether to hide in
+                                                -- loghook etc.
     , tdAction         :: !(X ())               -- ^ X Action bound to topic
     , tdActionOnStartup:: !Bool                 -- ^ Run the bound action on xmonad startup
     , tdActionOnFocus  :: !Bool                 -- ^ Run the action when ws is displayed
-    , tdHidden         :: !Bool                 -- ^ Superflous for now. Decide whether to hide in
-                                                -- loghook etc.
-    , tdDir            :: !Dir                  -- ^ Directory the spawning shell should spawn from
-    , tdMenuApps       :: ![(String, String)]   -- ^ Pretty name and exec string for 2D menu
     , tdBoundApps      :: ![Property]           -- ^ XProperties to tie in ManageHook
+    , tdMenuApps       :: ![(String, String)]   -- ^ Pretty name and exec string for 2D menu
     , tdKeyBindings    :: ![(String, X())]      -- ^ Keys that should enabled on ws list of (key, app)s
-    -- Unsure of actual type below (Possibly ModifiedLayout a l)
-    --, tdBoundLayout    :: LayoutClass l a => Layout (l a)
-    -- Possible TODO :
-    --  Add support for some of following:
-    --    - Mouse bindings
-    --    - Scratchpads
     }
-
+-- | A list of type TopicDefinition
 type TopicDefinitions = [TopicDefinition]
 
+-- | A configuration of the TopicDefinitions module. Careful what you change here.
+data TDConfig = TDConfig
+    { tdcDefaultTopic :: !TS.Topic
+    , tdcDefaultDir   :: !TS.Dir
+    , tdcDefultAction :: !(TS.Topic -> X())
+    , tdcMaxHistory   :: !Int
+    , tdcMenuKey      :: !Key
+    , tdcStartupApps  :: ![X()]
+    , tdcProgSetup    :: !ProgSetup
+    }
+
+defaultTDConfig tds = TDConfig
+    { tdcDefaultTopic = head $ topics tds
+    , tdcDefaultDir   = "~"
+    , tdcDefultAction = const $ return ()
+    , tdcMaxHistory   = 10
+    , tdcMenuKey      = EZKey "M-m"
+    , tdcStartupApps  = []
+    , tdcProgSetup    = ProgSetup
+        { taHomeDir     = "/home/psp"
+        , taDefaultDir  = "/home/psp"
+        , taTerminal    = "urxvtcd"
+        , taPDF         = "mupdf"
+        , taMail        = "mutt"
+        , taMailCalendar= "thunderbird"
+        , taEditor      = "gvim"
+        , taBrowser     = "firefox "
+        , taBrowserTab  = "firefox -new-tab "
+        , taBrowserWin  = "firefox -new-window "
+        , taPBrowserWin = "firefox -private-window "
+        , taFloats      = [ Resource "xclock" ]
+        , taCFloats     = [ ClassName "SMPlayer", ClassName "MPlayer", ClassName"XMessage"
+                          , ClassName "XFontSel", ClassName "bashrun", ClassName "zshrun"
+                          , Title "Google Chrome Options", Title "Chromium Options"]
+        , taFullFloats  = [ ClassName "XBMC", ClassName "Kodi"]
+        , taIgnores     = [ Resource "desktop",Resource "desktop_window",Resource "notify_osd", ClassName "Dunst"
+                          , Resource "staleontray", Resource "trayer",Resource "dzen2", Resource "dzen2-bar"]
+        , taStartup     = []--[spawn "pidgin"], safeSpawn "apulse32" ["skype"]]
+        }
+    }
+
+-- | New name will probably be TopicApps
+data ProgSetup = ProgSetup
+    { taHomeDir     :: !TS.Dir
+    , taDefaultDir  :: !TS.Dir
+    , taTerminal    :: !String
+    , taPDF         :: !String
+    , taMail        :: !String
+    , taMailCalendar:: !String
+    , taEditor      :: !String
+    , taBrowser     :: !String
+    , taBrowserTab  :: !String
+    , taBrowserWin  :: !String
+    , taPBrowserWin :: !String -- Private browser window
+    , taFloats      :: ![Property]
+    , taCFloats     :: ![Property]
+    , taFullFloats  :: ![Property]
+    , taIgnores     :: ![Property]
+    , taStartup     :: ![X()]
+    }
+
+
 --defaultTopicDefinition :: (Eq TopicDefinition, Ord TopicDefinition) => TopicDefinition
+defaultTopicDefinition = TopicDefinition
+    { tdName           = "1:main"
+    , tdDir            = "~"
+    , tdHidden         = False
+    , tdAction         = return ()
+    , tdActionOnStartup= False
+    , tdActionOnFocus  = True
+    , tdMenuApps       = [("Terminal", "urxvtc")]
+    , tdBoundApps      = []
+    , tdKeyBindings    = []
+    }
 
 -- Exported Functions
 ---------------------
 -- | List of topic names
-topics  :: TopicDefinitions -> [Topic]
-topics  = map (\x -> tdName x)
-
-numberedTopics :: TopicDefinitions -> [Topic]
-numberedTopics = foldr (\TopicDefinition{tdName=t} acc -> if isDigit $ head $ t then t:acc else acc) [[]]
--- | List containing only the head of input list
---onlyNumbers :: [String] -> (TopicDefinition -> String) -> [String]
---onlyNumbers = map (\n -> head n)
-
--- | Map, tying together topic names with their directories
---  (for use in TopicConfig)
-topicDirs' :: TopicDefinitions -> M.Map Topic Dir
-topicDirs' tds = M.fromList $ map (\x -> (tdName x, tdDir x)) tds
-
--- | Map from topic name to topic action
---   (for use in TopicConfig)
-topicActions' :: TopicDefinitions -> M.Map Topic (X())
-topicActions' tds = M.fromList $ map (\x -> (tdName x, tdAction x)) tds
+topics :: TopicDefinitions -> [TS.Topic]
+topics = map (\t -> tdName t)
 
 -- |Transforms TopicDefinitions into a list containing only the
 -- topics starting with a number ranging 1-9
---topicsWithNumber :: TopicDefinitions -> (TopicDefinition -> String -> String) -> [String] -> [TopicDefinitions] -> [String]
---topicsWithNumber = foldr (\TopicDefinition {tdName = n} acc -> if head n `elem` [1..9]
---                                                                  then n:acc
---                                                                  else acc) []
+numberedTopics :: TopicDefinitions -> [TS.Topic]
+numberedTopics tds = foldr (\n acc -> if isDigit $ head n then n:acc else acc) [[]] $ topics tds
 
+-- | Map, tying together topic names with their directories
+--  (for use in TopicConfig)
+topicDirs :: TopicDefinitions -> M.Map TS.Topic TS.Dir
+topicDirs tds = M.fromList $ map (\t -> (tdName t, tdDir t)) tds
 
+visibleTopicDefs :: TopicDefinitions -> TopicDefinitions
+visibleTopicDefs tds = filter (not . tdHidden) tds
+
+-- | Map from topic name to topic action
+--   (for use in TopicConfig)
+topicActions :: TopicDefinitions -> M.Map TS.Topic (X())
+topicActions tds = M.fromList $ map (\x -> (tdName x, tdAction x)) tds
+
+topicSpaceConf :: TDConfig -> TopicDefinitions -> TS.TopicConfig
+topicSpaceConf tdc tds = TS.defaultTopicConfig
+  { TS.topicDirs            = topicDirs tds
+  , TS.defaultTopicAction   = tdcDefultAction tdc
+  , TS.defaultTopic         = head $ topics tds
+  , TS.topicActions         = topicActions tds
+  , TS.maxTopicHistory      = tdcMaxHistory tdc
+  }
+
+-- | Construct a startup hook to be included in your XConfig.
+--   1. checks topics with X.A.TopicSpace.checkTopicConfig
+--   2. spawns the TopicDefinition actions if selected with tdActionOnStartup
+--   3. spawns the apps listed in your TDConfig.ProgSetup's startupApps field
+topicStartupHook :: TDConfig        -- ^ A TDConfig which holds much of the info
+                                    -- for X.A.TopicSpace.TopicConfig
+                 -> TopicDefinitions-- ^ [X.A.TopicSpace.Topics] to check
+                 -> ProgSetup       -- ^ ProgSetup
+                 -> X()
+topicStartupHook tc tds ps = catchIO (TS.checkTopicConfig (topics tds) (topicSpaceConf tc tds)) >>
+                            (mconcat . fmap (tdAction) . filter (tdActionOnStartup)) tds        >>
+                            mconcat (taStartup ps)
 
 -- | ManageHook -- compile a manage hook from the following:
 topicManageHook :: TopicDefinitions    -- ^ tds : TopicDefinitions to bind appropriate apps
@@ -107,7 +210,7 @@ topicManageHook :: TopicDefinitions    -- ^ tds : TopicDefinitions to bind appro
              -> [Property]          -- ^ cfs : list of window properties to force into centered floats
              -> [Property]          -- ^ ffs : list of window properties to force into full floats
              -> [Property]          -- ^ is  : ignored window properties
-             -> [(Property, Topic)] -- ^ mss : manual shifts [(property, workspace)]
+             -> [(Property, TS.Topic)] -- ^ mss : manual shifts [(property, workspace)]
              -> ManageHook          -- ^ The ManageHook to keep track of topics, floats and fullscreen apps.
 topicManageHook tds ts fs cfs ffs is mss =
     topicManageHook' <+> (composeAll . concat $
@@ -117,13 +220,19 @@ topicManageHook tds ts fs cfs ffs is mss =
     , [ propertyToQuery cfs'--> doCenterFloat | cfs' <- cfs ]
     , [ propertyToQuery ffs'--> doMyFFloat    | ffs' <- ffs ]
     , [ propertyToQuery is' --> doIgnore      | is'  <- is  ]
+    , [ propertyToQuery (ClassName "VirtualBox" `And` Not (Title "Oracle VM VirtualBox Håndtering")) -->
+            do t <- title
+               if ("Oracle VM VirtualBox" `isSuffixOf` t)
+               then do let ws = "vm-" ++ takeWhile (\c -> c /= '[') t
+                       liftX $ addHiddenWorkspace ws
+                       doF (W.shift ws) <+> doF (W.greedyView ws)
+               else return mempty ]
     ]) <+> (composeOne . concat $
     [ [ isFullscreen -?> doFullFloat   ]
     , [ isDialog     -?> doCenterFloat ]
     , [ return True  -?> doMaster      ] -- prevent new windows from stealing focus
     ]) where
         doTile          = (ask >>= doF . W.sink)
-        wmrole          = stringProperty "WM_WINDOW_ROLE"
         doMaster        = (doF W.shiftMaster)
         doMyFFloat      = (doF W.focusDown <+> doFullFloat)
         topicManageHook'= (composeAll . concat $ map (\TopicDefinition{tdName = n, tdBoundApps=as}
@@ -132,7 +241,7 @@ topicManageHook tds ts fs cfs ffs is mss =
 -- | A list of keybindings related to topics
 -- TODO : Take as argument the other keys and make keybindings in there that overlap with topicAppsKeys
 -- be bound on corresponding workspaces and the default ("", Action) be the binding in regular keys
-topicEZKeys :: TopicDefinitions -> TopicConfig -> [(String, X())] -> [(String, X ())]
+topicEZKeys :: TopicDefinitions -> TS.TopicConfig -> [(String, X())] -> [(String, X ())]
 topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndBind [] sortedTopicAppsKeys)) )
     where
         topicsApps :: [(String, X())]
@@ -144,13 +253,13 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
                         | (i, k) <- zip myNumberedTopics $ map show $ take (length myNumberedTopics) [1..]
                         , (f, m) <- [(topicWithAction,  ""), (shiftTo, "S-")]]
                       where myNumberedTopics = numberedTopics tds
-                            topicWithAction  = switchTopic tc
+                            topicWithAction  = TS.switchTopic tc
                             topicNoAction    = windows . W.view
                             shiftTo          = windows . W.shift
 
         -- | Shrink a list from 'sortedTopicAppsKeys' into a list of keybindings to be used in 'additionalKeysP'
-        shrinkAndBind :: [(String, [(Topic, X())])] -- ^ Accumulator / Already reduced list
-                      -> [(String, [(Topic, X())])] -- ^ Sorted list of tuples of (key string, [(Topic name, X() Action)])
+        shrinkAndBind :: [(String, [(TS.Topic, X())])] -- ^ Accumulator / Already reduced list
+                      -> [(String, [(TS.Topic, X())])] -- ^ Sorted list of tuples of (key string, [(Topic name, X() Action)])
                       -> [(String, X())]            -- ^ Duplicates reduced in sorted list of tuples of (key string, bindOn [(Topic name, X() Action)])
         shrinkAndBind acc []     = map (\(k, nas) -> (k, bindOn nas)) acc --base case: return key bindings
         shrinkAndBind acc (x:[]) = shrinkAndBind (x:acc) []
@@ -159,7 +268,7 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
                                                        else shrinkAndBind       ((k1,nas1):acc) ((k2,nas2):ks')
 
         -- | Manipulate a list of 'TopicDefinition' into a sorted list of tuples with el. 1 being key and el. 2 being tuples for X.A.BindOn
-        sortedTopicAppsKeys :: [( String, [(Topic, X())] )]
+        sortedTopicAppsKeys :: [( String, [(TS.Topic, X())] )]
         sortedTopicAppsKeys =
             let -- | Determines if first argument is lexigraphically smaller than the second.
                 smaller :: String -> String -> Bool
@@ -167,29 +276,38 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
                               | otherwise            = (s1 < s2)
                     where (len1, len2) = (length s1, length s2)
 
-                sortBinds :: (String, [(Topic, X())]) -> (String, [(Topic, X())]) -> Ordering
+                sortBinds :: (String, [(TS.Topic, X())]) -> (String, [(TS.Topic, X())]) -> Ordering
                 sortBinds (k1,_) (k2,_) | k1 == k2        = EQ
                                         | k1 `smaller` k2 = LT
                                         | otherwise       = GT
 
-                keyBindings :: [(String, [(Topic, X())])]
+                keyBindings :: [(String, [(TS.Topic, X())])]
                 keyBindings = map (\(k, a) -> (k, [("", a)])) ks
 
-                sortKeys :: [(String, [(Topic, X())])] -> [(String, [(Topic, X())])]
+                sortKeys :: [(String, [(TS.Topic, X())])] -> [(String, [(TS.Topic, X())])]
                 sortKeys = sortBy sortBinds
 
             in sortKeys $ keyBindings ++ concat (foldr (\TopicDefinition {tdName=n, tdKeyBindings=ks'} acc
                                             -> (map (\(k,a) -> (k, [(n,a)])) ks'):acc) [] tds)
 
+
+
+
+
+-- DEPRECATED/REPLACED/IDEAS THAT NEVER BECAME
+
 {-
---myTopicLayoutHook       = TU.topicLayoutHook myTopicDefs
+
+myTopicLayoutHook       = TU.topicLayoutHook myTopicDefs
+
 -- | Transform a TopicDefinition-list into a ManageHook
---myTopicLayoutHook :: ManageHook
---myTopicLayoutHook = composeAll $ map (\TopicDefinition { tdName = n
+myTopicLayoutHook :: ManageHook
+myTopicLayoutHook = composeAll $ map (\TopicDefinition { tdName = n
                                                        , tdBoundLayout = l
                                                        , tdDir = d }
                                         -> onWorkspace n (workspaceDir d l)
                                      ) myTopicDefs
+
 myTopicLayoutHook = avoidStruts $ renamed [CutWordsLeft 4] $ maximize $ boringWindows $ spacing 5 $
     (concat $ map (\TopicDefinition {tdName = n, tdBoundLayout = l, tdDir=d} -> onWorkspace n (workspaceDir d l)) myTopicDefs)
     myStandardLayout
@@ -197,9 +315,9 @@ myTopicLayoutHook = avoidStruts $ renamed [CutWordsLeft 4] $ maximize $ boringWi
 -- | Transform a TopicDefinition-list into a ManageHook
 topicLayoutHook :: TopicDefinitions -> ManageHook
 topicLayoutHook = composeAll $ map (\TopicDefinition{tdName = n, tdBoundLayout = l, tdDir = d} -> onWorkspace n (workspaceDir d l))
--}
---gaps [(U,16), (D,16), (L,0), (R,0)]
-{-
+
+
+gaps [(U,16), (D,16), (L,0), (R,0)]
 
 -- |Topic key bindings to be included in master key bindings (PSP.Keybinds)
 topicKeyBinds :: Ord (TopicDefinitions) => TopicDefinitions -> [(String, X())]
@@ -287,9 +405,9 @@ newAccBeg (newAccBeg::[(String, [(Topic, X())])], tmpNewAccEnd)::[(String, [(Top
                               let withTopics = map (\(k, a) -> (k, n, a)) ks
                                   isInAcc (k, n, a) = if k `elem` acc
                                                       then (span (k =/) acc)
-                                                      else 
+                                                      else
           foldr (\(k,t,a) acc -> let (xs,ys) = span (k =/)
-                                                tmp1 [] acc = span (k =/) 
+                                                tmp1 [] acc = span (k =/)
                                                 tmp = (t,a)
                                                      t $
                      foldr ( \(topic, kas) acc -> (map ( \(key, app) ->  (key, topic, app) ) kas) ++ acc ) [] $ -- should result in a long list of all topic keybindings
@@ -324,3 +442,4 @@ topicMenuKeyBind = compileKeyBinding $ listToBind
                                              else (tdName td, spawnSelected' apps):acc
                              )
 -}
+
