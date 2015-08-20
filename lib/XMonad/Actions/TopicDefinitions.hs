@@ -159,7 +159,7 @@ defaultTopicDefinition = TopicDefinition
 ---------------------
 -- | List of topic names
 topics :: TopicDefinitions -> [TS.Topic]
-topics = map (\t -> tdName t)
+topics = map (tdName)
 
 -- |Transforms TopicDefinitions into a list containing only the
 -- topics starting with a number ranging 1-9
