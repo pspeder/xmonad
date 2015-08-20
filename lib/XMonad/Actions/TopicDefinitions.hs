@@ -5,8 +5,6 @@
   , MultiParamTypeClasses
   , DataKinds
   , GADTs
-  , FunctionalDependencies
-  , KindSignatures
   , FlexibleInstances
   , UndecidableInstances
   , PolyKinds
