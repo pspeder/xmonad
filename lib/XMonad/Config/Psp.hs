@@ -84,43 +84,45 @@ spawnShellIn dir = spawnIn "/bin/zsh" dir
 spawnIn :: String -> String -> X()
 spawnIn app dir = spawn $ "cd " ++ dir ++ " && urxvtc -e " ++ app
 
-pspConfig d = withUrgencyHookC LibNotifyUrgencyHook
-                               urgencyConfig { suppressWhen = OnScreen
-                                             , remindWhen = Repeatedly 5 90 }
-            . withUrgencyHook  NoUrgencyHook
-            . ewmh
-            . addRemoveKeysP
-            $ defaultConfig
-                { modMask           = mod4Mask
-                , terminal          = "urxvtcd"
-                , workspaces        = topics pspTopicDefs
-                , startupHook       = ewmhDesktopsStartup           <+>
-                                      setDefaultCursor xC_left_ptr  <+>
-                                      setWMName "LG3D"              <+>
-                                      adjustEventInput              <+>
-                                      topicStartupHook pspTDConfig pspTopicDefs pspProgs --pspProgs -- Progs should probably be defined in this file also (named pspProgs probably)
-                , handleEventHook   = ewmhDesktopsEventHook         <+>
-                                      focusOnMouseMove              <+>
-                                      fullscreenEventHook           <+>
-                                      urxvtEventHook
-                , manageHook        = manageHook defaultConfig      <+>
-                                      dynamicMasterHook             <+>
-                                      insertPosition Below Newer    <+>
-                                      manageDocks                   <+>
-                                      pspNamedScratchpadManageHook  <+>
-                                      topicManageHook pspTopicDefs
-                                                    [(ClassName "Gimp")]     -- ts
-                                                    []                       -- fs
-                                                    [(ClassName "Skype" `And` Title "Options")] -- cfs
-                                                    []                       -- ffs
-                                                    []                       -- is
-                                                    []                       -- mss
-                , layoutHook        = myTopicLayoutHook
-                , logHook           = logHook defaultConfig >>
-                                      currentWorkspaceOnTop >>
-                                      ewmhDesktopsLogHook   >>
-                                      pspLogHook d
-                }
+pspConfig d =
+    withUrgencyHookC LibNotifyUrgencyHook
+                     urgencyConfig { suppressWhen = OnScreen
+                                   , remindWhen   = Repeatedly 5 90 }
+  . withUrgencyHook  NoUrgencyHook
+  . ewmh
+  . addRemoveKeysP
+  $ defaultConfig
+    { modMask           = mod4Mask
+    , terminal          = "urxvtcd"
+    , workspaces        = topics pspTopicDefs
+    , startupHook       = ewmhDesktopsStartup           <+>
+                          setDefaultCursor xC_left_ptr  <+>
+                          setWMName "LG3D"              <+>
+                          adjustEventInput              <+>
+                          topicStartupHook pspTDConfig pspTopicDefs pspProgs --pspProgs -- Progs should probably be defined in this file also (named pspProgs probably)
+    , handleEventHook   = ewmhDesktopsEventHook         <+>
+                          focusOnMouseMove              <+>
+                          fullscreenEventHook           <+>
+                          urxvtEventHook
+    , manageHook        = manageHook defaultConfig      <+>
+                          dynamicMasterHook             <+>
+                          insertPosition Below Newer    <+>
+                          manageDocks                   <+>
+                          pspNamedScratchpadManageHook  <+>
+                          topicManageHook pspTopicDefs
+                                          [(ClassName "Gimp")]     -- ts
+                                          []                       -- fs
+                                          [(ClassName "Skype" `And`
+                                            Title "Options")]      -- cfs
+                                          []                       -- ffs
+                                          []                       -- is
+                                          []                       -- mss
+    , layoutHook        = myTopicLayoutHook
+    , logHook           = logHook defaultConfig >>
+                          currentWorkspaceOnTop >>
+                          ewmhDesktopsLogHook   >>
+                          pspLogHook d
+    }
 
 pspTDConfig = TDConfig
     { tdcDefaultTopic = head $ topics pspTopicDefs
