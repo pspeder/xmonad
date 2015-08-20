@@ -8,14 +8,16 @@ module XMonad.Config.Psp.Configs
 , progs
 ) where
 
-import XMonad-- (spawn,Window(..),X(..))
-import XMonad.StackSet (tag)
-import Control.Monad.Writer (fix)
+import           XMonad-- (spawn,Window(..),X(..))
+import           XMonad.StackSet (tag)
+import           Control.Monad.Writer (fix)
 
-import Graphics.X11.Types
-import Data.List (isPrefixOf)
+import           Graphics.X11.Types
+import           Data.List (isPrefixOf)
 import qualified Data.Map as M (Map(..),fromList,mapKeys)
-import XMonad.Prompt (XPConfig(..),defaultXPKeymap,XPPosition(..))
+import           XMonad.Prompt (XPConfig(..)
+                               ,defaultXPKeymap
+                               ,XPPosition(..))
 import XMonad.Hooks.DynamicLog
 import XMonad.Actions.TopicSpace (Dir)
 import XMonad.Util.WindowProperties (Property(..))
@@ -56,6 +58,7 @@ myGSConfig = defaultGSConfig { gs_navigate = fix $ \self ->
                 ,(xK_space , setPos (0,0))
                 ]
     in makeXEventhandler $ shadowWithKeymap navKeyMap (const self) }
+
 myDarkXPConfig :: XPConfig
 myDarkXPConfig = defaultXPConfig
     { bgColor           = "black"

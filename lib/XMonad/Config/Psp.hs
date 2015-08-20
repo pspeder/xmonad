@@ -156,7 +156,7 @@ pspProgs = ProgSetup
 
 pspTopicDefs :: TopicDefinitions
 pspTopicDefs =
-  [ -- This is holds information about the Topic/workspace 1:main
+  [ -- This holds information about the Topic/workspace 1:main
     -- Initialise a new TopicDefinition record from scratch - you must then
     -- specify each record field with desired value(s).
     TopicDefinition
@@ -213,7 +213,7 @@ pspTopicDefs =
   -- Less typing - more difficult to get right.
   --                tdName        tdDir            tdHidden
   , TopicDefinition "3:organiser" "/home/psp/mail" False
-  --    tdAction               tdActionOnStartup   tdActionOnFocus
+  --    tdAction                  tdActionOnStartup   tdActionOnFocus
         (spawn $ taMail pspProgs) True                False
   --    tdBoundApps
         [ ClassName "Thunderbird", Resource "mutt" ]
