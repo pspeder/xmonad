@@ -41,14 +41,12 @@ import XMonad.Layout.Circle
 import XMonad.Layout.Fullscreen (fullscreenFull,FullscreenFull(..))
 import XMonad.Layout.StackTile
 import XMonad.Layout.Dishes
-import XMonad.Layout.TwoPane
 import XMonad.Layout.ComboP (combineTwoP,CombineTwoP(..),SwapWindow)
 import XMonad.Layout.Accordion                                -- Stack windows like an accordion
 import XMonad.Layout.IM                                       -- For multi-window apps (Gimp/Pidgin)
 import XMonad.Layout.NoBorders                                -- Some windows should be plain
 import XMonad.Layout.Tabbed -- (tabbedAlways,shrinkText,defaultTheme) -- Tabbed layout
 import XMonad.Layout.TwoPane                                  -- -- || --
-import XMonad.Layout.Column                                   -- A single column
 import qualified XMonad.Util.WindowProperties as WP
 
 --import qualified PSP.Topics.Utils as TU
@@ -77,21 +75,21 @@ myTopicLayoutHook =
                                  , Prepend "p(", Append ")"] $ comboL pdfsL
              codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
                                  , Prepend "c(", Append ")"] $ comboL codeL
-         in codeEditor ||| pdfEditor                            ) .
+         in codeEditor ||| pdfEditor ||| layoutFullscreenFull   ) .
     set ("5:www"        , "~/downloads" , layoutCircle
                                       ||| layoutGrid (4/3)
                                       ||| layoutCrossD
                                       ||| layoutFullscreenFull  ) .
     set ("6:chat"       , "~/downloads" ,
          renamed [CutWordsLeft 2] $ withIM (15/100) (Resource "pspeder - skype™") $ reflectHoriz $
-         renamed [CutWordsLeft 2] $ withIM (17/100) (Role "buddy_list") $ reflectHoriz $
+         renamed [CutWordsLeft 2] $ withIM (17/100) (Role "buddy_list") $ reflectHoriz
          layoutGridD                                        ) .
     set ("7:vms"        , "~/shares"    , centerMaster (layoutMTallD
                                       ||| layoutCircle
                                       ||| layoutCrossD)     ) .
     set ("8:media"      , "~/images"    ,
          renamed [CutWordsLeft 2] $ withIM (19/100) (ClassName "gimp-dock") $ reflectHoriz $
-         renamed [CutWordsLeft 2] $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz $
+         renamed [CutWordsLeft 2] $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz
          layoutGridD             ) .
     set ("remotes"      , "~/shares"    ,
          lAddSDrawerL (ClassName "URxvt" `And` Role "drawerTerm")
@@ -103,9 +101,9 @@ myTopicLayoutHook =
 
 myStandardLayout = smartBorders (layoutTallD ||| layoutMTallD ||| layoutFullscreenFull)
 
-resizePercentage = (2/100)
+resizePercentage = 2/100
 layoutSpacing    = 2
-layoutMasterSize = (6/10)
+layoutMasterSize = 6/10
 
 --------------------------
 -- LAYOUTS W. DEFAULTS  --
@@ -122,16 +120,16 @@ layoutDishesD       = layoutDishes 1 layoutMasterSize
 --   (NAMED) LAYOUTS    --
 --------------------------
 layoutFullscreenFull= renamed [Replace "F"] $ noBorders $ fullscreenFull Full
-layoutSTabbedD      = renamed [Replace "t"] $ noBorders $ simpleTabbed
-layoutCircle        = renamed [Replace "C"] $ Circle
+layoutSTabbedD      = renamed [Replace "t"] $ noBorders simpleTabbed
+layoutCircle        = renamed [Replace "C"] Circle
 
 layoutTall m p      = renamed [Replace "H"] $ Tall m resizePercentage p
 layoutMTall m p     = renamed [Replace "V"] $ Mirror $ Tall m resizePercentage p
 layoutStackTile m p = renamed [Replace "S"] $ StackTile m resizePercentage p
 layoutGrid r        = renamed [Replace "G"] $ GridRatio r
 layoutCross p       = renamed [Replace "x"] $ Cross p resizePercentage
-layoutAccordion     = renamed [Replace "A"] $ Accordion
 layoutDishes m p    = renamed [Replace "D"] $ Dishes m p
+layoutAccordion     = renamed [Replace "A"] Accordion
 
 --------------------------
 --  LAYOUT COMBINATORS  --
@@ -142,7 +140,7 @@ lAddSDrawerL p l  = simpleDrawer 0 layoutMasterSize p `onLeft` l
 lAddSDrawerB p l  = simpleDrawer 0 layoutMasterSize p `onBottom` l
 lAddSDrawerT p l  = simpleDrawer 0 layoutMasterSize p `onTop` l
 lAddSDrawerR p l  = simpleDrawer 0 layoutMasterSize p `onRight` l
-lAddSpacing s l   = renamed [CutWordsLeft 2] $ spacing s $ l
+lAddSpacing s l   = renamed [CutWordsLeft 2] $ spacing s l
 lAddTabs s t l    = renamed [CutWordsLeft 2, Prepend "T(", Append ")"] $ spacing s $ addTabsAlways shrinkText t l
 --bothSidesMenuLayout (lProp,lPerc) (rProp,rPerc) layout =
 --    renamed [Prepend "I(",Append ")"] $ wim (lProp,lPerc)
