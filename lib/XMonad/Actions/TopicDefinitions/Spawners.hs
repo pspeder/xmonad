@@ -12,7 +12,7 @@
 --
 -- For a short while undefined. I plan to rectify this asap.
 -----------------------------------------------------------------------------
-module XMonad.Actions.TopicDefinitions.ActionsAndSpawners
+module XMonad.Actions.TopicDefinitions.Spawners
 (-- ** Possibilities for spawning apps with the TopicDefinitions module
   tdSpawnIn
 , tdSpawn
@@ -30,10 +30,13 @@ module XMonad.Actions.TopicDefinitions.ActionsAndSpawners
 , tdChangeDir
 ) where
 
-import XMonad (X(..), (<+>),spawn)
-import XMonad.StackSet (greedyview)
-import XMonad.Actions.TopicDefinitions
-import XMonad.Actions.GridSelect
+import           XMonad                             (X(..)
+                                                    ,(<+>)
+                                                    ,spawn
+                                                    ,WindowSpace(..))
+import           XMonad.StackSet                    (greedyview)
+import           XMonad.Actions.TopicDefinitions
+import           XMonad.Actions.GridSelect
 
 -- | Spawn an application in the given directory
 tdSpawnIn :: String -> String -> X()
@@ -42,7 +45,7 @@ tdSpawnIn = undefined
 -- Uses 'tdSpawnIn' to do its bidding.
 tdSpawn :: TDConfig -> String -> X()
 tdSpawn = undefined
--- | (Safe)Spawn an application whose with additional arguments in current topic's dir.
+-- | (Safe)Spawn an application with additional arguments from current topic's dir.
 -- Uses 'tdSpawnIn' to do its bidding.
 tdSSpawnArgs :: TDConfig -> String -> [String] -> X()
 tdSSpawnArgs = undefined
@@ -52,7 +55,7 @@ tdSpawnTerm = undefined
 -- | Spawn an application on specified workspace (in its directory) and if
 -- second argument is true, also shift to it.
 tdSpawnTo :: TDConfig -> Bool -> String -> Topic -> X()
-tdSpawnTerm tdc s a n = undefined
+tdSpawnTo tdc s a n = undefined
 -- | Will display a 'GridSelect' menu with pretty printed names of 'X()' actions
 -- to spawn from current topic's dir. Uses 'tdSpawnIn' to do its bidding.
 tdSelectSpawn :: TDConfig -> [(String, String)] -> X()
@@ -61,7 +64,7 @@ tdSelectSpawn tdc as = undefined
 -- | Will display a list of topics to switch to using the 'GridSelect.GSConfig'
 -- specified in TDConfig.
 tdSelectAndGotoTopic :: TDConfig -> X()
-tdSelectTopic tdc = undefined
+tdSelectAndGotoTopic tdc = undefined
 -- | Switch to topic and update directory. If second \"argument\" is 'True', also
 -- run 'tdAction' if workspace is empty.
 tdGotoTopic :: TDConfig -> Bool -> Topic -> X()
