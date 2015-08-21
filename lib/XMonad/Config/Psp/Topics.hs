@@ -27,6 +27,9 @@ import           XMonad.Config.Psp.Configs
 import           XMonad.Config.Psp.Layouts      (myStandardLayout,myTopicLayoutHook)
 import           XMonad.Config.Psp.Scratchpads  (namedScratchpadAction, myScratches)
 
+import           XMonad.Util.WindowProperties
+import           XMonad.Actions.WindowGo
+
 --spawn' :: String -> X()
 --spawn' app = currentTopicDir myTopicConfig >>= (spawnIn app)
 
@@ -63,7 +66,8 @@ myTopicDefs =
         { tdName            = "1:main"  -- Workspace name
         , tdDir             = "/home/psp"-- X.A.TopicSpace directory
         , tdAction          = -- X () action to spawn when workspace is chosen
-                              spawnShell >*> 2
+                              return ()
+                              --runOrRaise "urxvtc" (propertyToQuery (Resource "urxvt"))  >*> 2
         , tdActionOnStartup = False     -- Should action be run on XMonad start?
         , tdActionOnFocus   = False     -- Should it be run when ws is selected?
         , tdHidden          = False     -- Should the workspace be hidden

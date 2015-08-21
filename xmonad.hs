@@ -4,6 +4,7 @@ import XMonad               ( xmonad )
 import XMonad.Config.Psp    ( pspConfig )
 import XMonad.Util.Run      ( spawnPipe )
 import XMonad.Util.Replace  ( replace )
+import System.Process
 
 main :: IO()
 main = do
