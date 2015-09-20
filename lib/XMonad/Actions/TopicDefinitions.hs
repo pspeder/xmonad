@@ -67,30 +67,30 @@ data Key = EZKey String | XKey (KeyMask, KeySym)
 --    - Mouse bindings
 --    - Scratchpads
 data TopicDefinition = TopicDefinition
-    { tdName           :: !TS.Topic             -- ^ Identifier
-    , tdDir            :: !TS.Dir               -- ^ Directory the spawning shell should spawn from.
-                                                -- If none given, use tdcDefaultDir of config.
-    , tdHidden         :: !Bool                 -- ^ Superflous for now. Decide whether to hide in
-                                                -- loghook etc.
-    , tdAction         :: !(X ())               -- ^ X Action bound to topic
-    , tdActionOnStartup:: !Bool                 -- ^ Run the bound action on xmonad startup
-    , tdActionOnFocus  :: !Bool                 -- ^ Run the action when ws is displayed
-    , tdBoundApps      :: ![Property]           -- ^ XProperties to tie in ManageHook
-    , tdMenuApps       :: ![(String, String)]   -- ^ Pretty name and exec string for 2D menu
-    , tdKeyBindings    :: ![(String, X())]      -- ^ Keys that should enabled on ws list of (key, app)s
+    { tdName           :: TS.Topic             -- ^ Identifier
+    , tdDir            :: TS.Dir               -- ^ Directory the spawning shell should spawn from.
+                                               -- If none given, use tdcDefaultDir of config.
+    , tdHidden         :: Bool                 -- ^ Superflous for now. Decide whether to hide in
+                                               -- loghook etc.
+    , tdAction         :: (X ())               -- ^ X Action bound to topic
+    , tdActionOnStartup:: Bool                 -- ^ Run the bound action on xmonad startup
+    , tdActionOnFocus  :: Bool                 -- ^ Run the action when ws is displayed
+    , tdBoundApps      :: [Property]           -- ^ XProperties to tie in ManageHook
+    , tdMenuApps       :: [(String, String)]   -- ^ Pretty name and exec string for 2D menu
+    , tdKeyBindings    :: [(String, X())]      -- ^ Keys that should enabled on ws list of (key, app)s
     }
 -- | A list of type TopicDefinition
 type TopicDefinitions = [TopicDefinition]
 
 -- | A configuration of the TopicDefinitions module. Careful what you change here.
 data TDConfig = TDConfig
-    { tdcDefaultTopic :: !TS.Topic
-    , tdcDefaultDir   :: !TS.Dir
-    , tdcDefultAction :: !(TS.Topic -> X())
-    , tdcMaxHistory   :: !Int
-    , tdcMenuKey      :: !Key
-    , tdcStartupApps  :: ![X()]
-    , tdcProgSetup    :: !ProgSetup
+    { tdcDefaultTopic :: TS.Topic
+    , tdcDefaultDir   :: TS.Dir
+    , tdcDefultAction :: (TS.Topic -> X())
+    , tdcMaxHistory   :: Int
+    , tdcMenuKey      :: Key
+    , tdcStartupApps  :: [X()]
+    , tdcProgSetup    :: ProgSetup
     }
 
 defaultTDConfig tds = TDConfig
@@ -125,22 +125,22 @@ defaultTDConfig tds = TDConfig
 
 -- | New name will probably be TopicApps
 data ProgSetup = ProgSetup
-    { taHomeDir     :: !TS.Dir
-    , taDefaultDir  :: !TS.Dir
-    , taTerminal    :: !String
-    , taPDF         :: !String
-    , taMail        :: !String
-    , taMailCalendar:: !String
-    , taEditor      :: !String
-    , taBrowser     :: !String
-    , taBrowserTab  :: !String
-    , taBrowserWin  :: !String
-    , taPBrowserWin :: !String -- Private browser window
-    , taFloats      :: ![Property]
-    , taCFloats     :: ![Property]
-    , taFullFloats  :: ![Property]
-    , taIgnores     :: ![Property]
-    , taStartup     :: ![X()]
+    { taHomeDir     :: TS.Dir
+    , taDefaultDir  :: TS.Dir
+    , taTerminal    :: String
+    , taPDF         :: String
+    , taMail        :: String
+    , taMailCalendar:: String
+    , taEditor      :: String
+    , taBrowser     :: String
+    , taBrowserTab  :: String
+    , taBrowserWin  :: String
+    , taPBrowserWin :: String -- Private browser window
+    , taFloats      :: [Property]
+    , taCFloats     :: [Property]
+    , taFullFloats  :: [Property]
+    , taIgnores     :: [Property]
+    , taStartup     :: [X()]
     }
 
 
