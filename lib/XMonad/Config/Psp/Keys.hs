@@ -10,6 +10,7 @@ module XMonad.Config.Psp.Keys
 ) where
 
 import           Data.Ratio                         ( (%) )                             -- for keysControlFloats
+import qualified XMonad.StackSet as W               (focusMaster)
 
 import           XMonad
 import           XMonad.Util.EZConfig               ( additionalKeysP,removeKeysP )
@@ -65,9 +66,13 @@ keysToAdd = myTopicKeys (
         , ("M-p d"                  , changeDir myXPConfig                      )
         , ("M-p x"                  , xmonadPrompt myXPConfig                   )
         , ("M-p m"                  , manPrompt myXPConfig                      )
-        , ("M-p n"                  , do spawnIn "/home/psp/notes/" "date >> quicknote.txt"
+        , ("M-p q"                  , do spawnIn "/home/psp/notes/" "date >> quicknote.txt"
                                          appendFilePrompt myXPConfig "/home/psp/notes/quicknote.txt")
+        , ("M-p n"                  , spawn "gvim $(date +%F-%T).md"            )
+        , ("M2-m f"                 , windows W.focusMaster                     )
+        , ("M2-m +"                 , sendMessage $ IncMasterN 1                )
         , ("M-r"                    , runOrRaisePrompt myXPConfig               )
+        , ("M-S-r"                  , restart "xmonad" True                     )
         , ("M-<Tab>"                , rotAllUp                                  )
         , ("M-S-<Tab>"              , rotAllDown                                )
         , ("M-w"                    , wsGo True myGSConfig                      )
@@ -107,7 +112,7 @@ keysToAdd = myTopicKeys (
         , ("M-p d"                  , changeDir myXPConfig                      )
         , ("M-p x"                  , xmonadPrompt myXPConfig                   )
         , ("M-p m"                  , manPrompt myXPConfig                      )
-        , ("M-p n"                  , do spawnIn "/home/psp/notes/" "date >> quicknote.txt"
+        , ("M-p n"                  , do name <- spawnIn "/home/psp/notes/" "date  quicknote.txt"
                                          appendFilePrompt myXPConfig "/home/psp/notes/quicknote.txt")
         , ("M-r"                    , runOrRaisePrompt myXPConfig               )
         , ("M-<Tab>"                , rotAllUp                                  )

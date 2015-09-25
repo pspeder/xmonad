@@ -261,3 +261,9 @@ myTopicDefs =
         -- , tdBoundLayout     = myStandardLayout
         }
   ]
+
+-- | From: https://mail.haskell.org/pipermail/xmonad/2012-August/012880.html
+--visibleWorkspaces :: X [WorkspaceId]
+--visibleWorkspaces = do
+--    ws <- gets windowset
+--    return $ map W.tag $ W.current ws:(W.visible ws)

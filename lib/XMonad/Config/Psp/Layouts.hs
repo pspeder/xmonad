@@ -10,10 +10,10 @@ module XMonad.Config.Psp.Layouts
 )
 where
 
-import XMonad hiding ((|||))
-import XMonad.Layout hiding ((|||))
+import XMonad                   hiding ((|||))
+import XMonad.Layout            hiding ((|||))
+import XMonad.Layout.LayoutCombinators ((|||))
 import XMonad.Layout.LayoutModifier
-import XMonad.Layout.LayoutCombinators
 -- Utilities
 import XMonad.Hooks.ManageDocks (avoidStruts, ToggleStruts(..))
 import XMonad.Layout.BoringWindows (boringWindows)
@@ -66,34 +66,33 @@ myTopicLayoutHook =
                      . layoutHintsWithPlacement (0.5, 0.5)
                      . noBorders
                      $ layoutStackTile 1 (9/10)
+             props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
+                                               `And` Resource "editorterm")
              comboL l= combineTwoP masterL editorL l props
              pdfsL   = myStandardLayout
              codeL   = layoutMTallD ||| layoutSTabbedD
-             props   = ClassName "Gvim"  `Or` (ClassName "URxvt"
-                                         `And` Resource "editorterm")
              pdfEditor = renamed [ CutWordsLeft 1, CutWordsRight 11
                                  , Prepend "p(", Append ")"] $ comboL pdfsL
              codeEditor= renamed [ CutWordsLeft 1, CutWordsRight 11
                                  , Prepend "c(", Append ")"] $ comboL codeL
-         in codeEditor ||| pdfEditor ||| layoutFullscreenFull   ) .
-    set ("5:www"        , "~/downloads" , layoutCircle
+         in layoutFullscreenFull ||| codeEditor ||| pdfEditor ) .
+    set ("5:www"        , "~/downloads" , layoutFullscreenFull
                                       ||| layoutGrid (4/3)
-                                      ||| layoutCrossD
-                                      ||| layoutFullscreenFull  ) .
-    set ("6:chat"       , "~/downloads" ,
-         renamed [CutWordsLeft 2] $ withIM (15/100) (Resource "pspeder - skype™") $ reflectHoriz $
-         renamed [CutWordsLeft 2] $ withIM (17/100) (Role "buddy_list") $ reflectHoriz
-         layoutGridD                                        ) .
-    set ("7:vms"        , "~/shares"    , centerMaster (layoutMTallD
                                       ||| layoutCircle
-                                      ||| layoutCrossD)     ) .
-    set ("8:media"      , "~/images"    ,
-         renamed [CutWordsLeft 2] $ withIM (19/100) (ClassName "gimp-dock") $ reflectHoriz $
-         renamed [CutWordsLeft 2] $ withIM (25/100) (Role "gimp-toolbox")   $ reflectHoriz
-         layoutGridD             ) .
-    set ("remotes"      , "~/shares"    ,
-         lAddSDrawerL (ClassName "URxvt" `And` Role "drawerTerm")
-                      myStandardLayout                      ) .
+                                      ||| layoutCrossD ) .
+    set ("6:chat"       , "~/downloads" , layoutSideMenus (15, Title "pspeder - Skype™")
+                                                          (17, Role  "buddy_list")
+                                                          (layoutSTabbedD       |||
+                                                           layoutMTall 1 (5/12) |||
+                                                           layoutMGrid (1/3))   ) .
+    set ("7:vms"        , "~/shares"    , layoutMTallD
+                                      ||| layoutCircle
+                                      ||| layoutCrossD      ) .
+    set ("8:media"      , "~/images"    , layoutSideMenus (19, ClassName "gimp-dock")
+                                                          (25, Role "gimp-toolbox")
+                                                          layoutGridD           ) .
+    set ("remotes"      , "~/shares"    , lAddSDrawerL (ClassName "URxvt" `And` Role "drawerTerm")
+                                          myStandardLayout                      ) .
     set ("server"       , "~/srv"       , myStandardLayout  ) .
     set ("configs"      , "~/dev/Configs",myStandardLayout  ) $
     workspaceDir "~" myStandardLayout
@@ -110,7 +109,7 @@ layoutMasterSize = 6/10
 --------------------------
 layoutTallD         = layoutTall 1 layoutMasterSize
 layoutMTallD        = layoutMTall 1 layoutMasterSize
-layoutStackTileD    = layoutStackTile 1 (6/10)
+layoutStackTileD    = layoutStackTile 1 layoutMasterSize
 layoutCrossD        = layoutCross (5/6)
 layoutGridD         = layoutGrid (1/2)
 layoutAccordionD    = layoutAccordion
@@ -119,6 +118,9 @@ layoutDishesD       = layoutDishes 1 layoutMasterSize
 --------------------------
 --   (NAMED) LAYOUTS    --
 --------------------------
+layoutSideMenus (lperc,lprop) (rperc,rprop) l =
+    renamed [CutWordsLeft 2] $ withIM (lperc/100) (lprop) $ reflectHoriz $
+    renamed [CutWordsLeft 2] $ withIM (rperc/100) (rprop) $ reflectHoriz $ l
 layoutFullscreenFull= renamed [Replace "F"] $ noBorders $ fullscreenFull Full
 layoutSTabbedD      = renamed [Replace "t"] $ noBorders simpleTabbed
 layoutCircle        = renamed [Replace "C"] Circle
@@ -127,6 +129,7 @@ layoutTall m p      = renamed [Replace "H"] $ Tall m resizePercentage p
 layoutMTall m p     = renamed [Replace "V"] $ Mirror $ Tall m resizePercentage p
 layoutStackTile m p = renamed [Replace "S"] $ StackTile m resizePercentage p
 layoutGrid r        = renamed [Replace "G"] $ GridRatio r
+layoutMGrid r       = renamed [Replace "g"] $ Mirror $ GridRatio r -- find better name
 layoutCross p       = renamed [Replace "x"] $ Cross p resizePercentage
 layoutDishes m p    = renamed [Replace "D"] $ Dishes m p
 layoutAccordion     = renamed [Replace "A"] Accordion
@@ -142,10 +145,6 @@ lAddSDrawerT p l  = simpleDrawer 0 layoutMasterSize p `onTop` l
 lAddSDrawerR p l  = simpleDrawer 0 layoutMasterSize p `onRight` l
 lAddSpacing s l   = renamed [CutWordsLeft 2] $ spacing s l
 lAddTabs s t l    = renamed [CutWordsLeft 2, Prepend "T(", Append ")"] $ spacing s $ addTabsAlways shrinkText t l
---bothSidesMenuLayout (lProp,lPerc) (rProp,rPerc) layout =
---    renamed [Prepend "I(",Append ")"] $ wim (lProp,lPerc)
---                                      $ wim (rProp,rPerc) $ layout
---    where wim (pr,pe) l = renamed [CutWordsLeft 2] $ withIM (pe/100) pr $ reflectHoriz $ l
 
 --layoutDrawerD d p   = layoutDrawerT d (0,(1/3)) p (Tall 1 (2/100) (6/10)) layoutTiled
 --layoutDrawerT d (sc,so) p dl l = case d of L -> draw `onLeft` l

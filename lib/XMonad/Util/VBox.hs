@@ -15,4 +15,13 @@ vboxManageHook = propertyToQuery (ClassName "VirtualBox") -->
                          of (_,"",_) -> return mempty
                             (n,_,_)  -> do let ws = "vm-" ++ n
                                            liftX $ addHiddenWorkspace ws
-                                           doShift ws ]
+                                           doShift ws
+
+newHook = propertyToQuery (ClassName "VirtualBox" `And` Not (Title "Oracle VM VirtualBox Håndtering")) -->
+            do t <- title
+               if ("Oracle VM VirtualBox" `isSuffixOf` t)
+               then do let ws = "vm-" ++ takeWhile (\c -> c /= '[') t
+                       liftX $ addHiddenWorkspace ws
+                        viewShift ws
+               else return mempty
+    where viewShift = doF . liftM2 (.) W.greedyView W.shift

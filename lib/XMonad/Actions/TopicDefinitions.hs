@@ -38,6 +38,7 @@ import qualified XMonad.Actions.TopicSpace as TS(Dir,Topic,TopicConfig(..)
                                                 ,switchTopic,topicAction
                                                 ,checkTopicConfig,defaultTopicConfig)
 -- Utilities
+import           Control.Monad                  (liftM2)
 import qualified Data.Map as M                  (fromList,Map(..))
 import           Data.List                      (sortBy,isSuffixOf)
 import           Data.Char                      (isDigit)
@@ -47,7 +48,7 @@ import           System.Directory               (getHomeDirectory)
 import           System.IO                      (FilePath)
 
 import qualified XMonad.StackSet as W           (focusDown,greedyView,shift,shiftMaster,sink,view,Workspace(..))
-import           XMonad.Actions.DynamicWorkspaces (addHiddenWorkspace)
+import           XMonad.Actions.DynamicWorkspaces(addHiddenWorkspace)
 import           XMonad.Layout.PerWorkspace     (onWorkspace)
 import           XMonad.Util.WindowProperties   (Property(..),propertyToQuery)
 -- Hooks
@@ -220,27 +221,27 @@ topicManageHook tds ts fs cfs ffs is mss =
     , [ propertyToQuery cfs'--> doCenterFloat | cfs' <- cfs ]
     , [ propertyToQuery ffs'--> doMyFFloat    | ffs' <- ffs ]
     , [ propertyToQuery is' --> doIgnore      | is'  <- is  ]
-    , [ propertyToQuery (ClassName "VirtualBox" `And` Not (Title "Oracle VM VirtualBox Håndtering")) -->
-            do t <- title
-               if ("Oracle VM VirtualBox" `isSuffixOf` t)
-               then do let ws = "vm-" ++ takeWhile (\c -> c /= '[') t
-                       liftX $ addHiddenWorkspace ws
-                       doF (W.shift ws) <+> doF (W.greedyView ws)
-               else return mempty ]
-    ]) <+> (composeOne . concat $
-    [ [ isFullscreen -?> doFullFloat   ]
-    , [ isDialog     -?> doCenterFloat ]
-    , [ return True  -?> doMaster      ] -- prevent new windows from stealing focus
+    ]) <+> vboxHook <+> (composeOne
+    [ isFullscreen -?> doFullFloat
+    , isDialog     -?> doCenterFloat
+    , return True  -?> doMaster      -- prevent new windows from stealing focus
     ]) where
         doTile          = (ask >>= doF . W.sink)
         doMaster        = (doF W.shiftMaster)
+        doViewShift     = doF . liftM2 (.) W.greedyView W.shift -- from: http://pastebin.com/PTE7Y09Y
         doMyFFloat      = (doF W.focusDown <+> doFullFloat)
         topicManageHook'= (composeAll . concat $ map (\TopicDefinition{tdName = n, tdBoundApps=as}
                         -> [ (propertyToQuery id) --> doShift n | id <- as ]) tds)
+        vboxHook        = propertyToQuery
+            (ClassName "VirtualBox" `And` Not (Title "Oracle VM VirtualBox Håndtering")) -->
+                do t <- title
+                   if ("Oracle VM VirtualBox" `isSuffixOf` t)
+                   then do let ws = "vm-" ++ takeWhile (\c -> c /= '[') t
+                           liftX $ addHiddenWorkspace ws
+                           doViewShift ws
+                   else return mempty
 
 -- | A list of keybindings related to topics
--- TODO : Take as argument the other keys and make keybindings in there that overlap with topicAppsKeys
--- be bound on corresponding workspaces and the default ("", Action) be the binding in regular keys
 topicEZKeys :: TopicDefinitions -> TS.TopicConfig -> [(String, X())] -> [(String, X ())]
 topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndBind [] sortedTopicAppsKeys)) )
     where
