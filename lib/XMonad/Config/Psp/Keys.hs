@@ -84,7 +84,7 @@ keysToAdd = myTopicKeys (
         -- | Screen Brightness
         , ("XF86MonBrightnessDown"  , spawn "xbacklight -dec 8%"                )
         , ("XF86MonBrightnessUp"    , spawn "xbacklight -inc 8%"                )
-        ] ++ keysNamedScratchpads ++ powerMenu)
+        ] ++ keysNamedScratchpads ++ powerMenu ++ keysLocalMedia)
 
 {- Above two were originally
         `removeKeysP` (

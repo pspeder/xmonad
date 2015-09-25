@@ -12,4 +12,3 @@ main = do
     d <- spawnPipe "dzen2 -p -ta l -e 'onstart=lower'"
     xmonad $ pspConfig d
 
-
