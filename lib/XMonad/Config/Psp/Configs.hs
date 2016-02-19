@@ -13,6 +13,7 @@ import           XMonad.StackSet (tag)
 import           Control.Monad.Writer (fix)
 
 import           Graphics.X11.Types
+import           Graphics.X11.Xlib.Types (Dimension)
 import           Data.List (isPrefixOf)
 import qualified Data.Map as M (Map(..),fromList,mapKeys)
 import           XMonad.Prompt (XPConfig(..)
@@ -22,7 +23,7 @@ import XMonad.Hooks.DynamicLog
 import XMonad.Actions.TopicSpace (Dir)
 import XMonad.Util.WindowProperties (Property(..))
 import XMonad.Util.Run (hPutStrLn)
-import XMonad.Actions.GridSelect (buildDefaultGSConfig,defaultGSConfig,gridselect,GSConfig(..),colorRangeFromClassName,TwoD(..),makeXEventhandler,shadowWithKeymap,cancel,select,move,setPos,substringSearch,defaultColorizer,HasColorizer(..),stringColorizer)
+import XMonad.Actions.GridSelect (buildDefaultGSConfig,def,gridselect,GSConfig(..),colorRangeFromClassName,TwoD(..),makeXEventhandler,shadowWithKeymap,cancel,select,move,setPos,substringSearch,defaultColorizer,HasColorizer(..),stringColorizer)
 
 import XMonad.Config.Psp.Utils (nonEmptyWS)
 import XMonad.Actions.TopicDefinitions (ProgSetup(..))
@@ -35,7 +36,7 @@ instance HasColorizer WindowSpace where
     else return ("#CAC3BA", "white")
 
 myGSConfig :: HasColorizer a => GSConfig a
-myGSConfig = defaultGSConfig { gs_navigate = fix $ \self ->
+myGSConfig = def { gs_navigate = fix $ \self ->
     let navKeyMap = M.mapKeys ((,) 0) $ M.fromList $
                 [(xK_Escape, cancel)
                 ,(xK_Return, select)
@@ -89,6 +90,7 @@ defaultXPConfig =
         , promptBorderWidth = 1
         , promptKeymap      = defaultXPKeymap
         , completionKey     = xK_Tab
+        , maxComplRows      = Just 10
         , changeModeKey     = xK_grave
         , position          = Bottom
         , height            = 18

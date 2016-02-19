@@ -7,7 +7,7 @@ import           Data.Traversable           (traverse)
 import           Control.Monad              (liftM,sequence)
 import XMonad (withWindowSet,WindowSpace(..),X(..),Window(..))
 import XMonad.StackSet (index,peek,Workspace(..))
-import XMonad.Hooks.DynamicLog (PP(..),defaultPP,shorten,pad,dzenStrip,dzenColor,wrap,dzenPP,dzenEscape,dynamicLogWithPP,ppOutput)
+import XMonad.Hooks.DynamicLog (PP(..),def,shorten,pad,dzenStrip,dzenColor,wrap,dzenPP,dzenEscape,dynamicLogWithPP,ppOutput)
 import XMonad.Util.Run (hPutStrLn)
 import XMonad.Util.Loggers (Logger(..))
 import XMonad.Util.NamedWindows (getName,unName)
@@ -83,7 +83,7 @@ formatTitles num (x:xs) = formatTitle x num ++ formatTitles num xs
 formatTitles _ [] = ""
 
 -- Loghook
-myOldLogHook h = dynamicLogWithPP $ defaultPP
+myOldLogHook h = dynamicLogWithPP $ def
     -- display current workspace as darkgrey on light grey (opposite of
     -- default colors)
     { ppCurrent         = dzenColor "#303030" "#909090" . pad
