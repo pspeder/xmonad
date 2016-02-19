@@ -68,7 +68,7 @@ spawnShellIn dir = spawnIn "/bin/zsh" dir
 --   Select an application to launch from X.A.GridSelect with a pp'ed name.
 spawnSelected' :: [(String, String)] -> X ()
 spawnSelected' lst = gridselect conf lst >>= flip whenJust spawn
-    where conf = defaultGSConfig
+    where conf = def
 
 -- | Start applications on specific workspaces, e.g., spawnToWorkspace "urxvt" "4"
 --   http://stackoverflow.com/questions/4917820/start-applications-on-specific-workspaces-in-xmonad

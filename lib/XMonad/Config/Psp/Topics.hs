@@ -17,7 +17,7 @@ import qualified Data.Map as M                  ( Map(..) )
 import           XMonad                         ( ManageHook(..),spawn,X(..) )
 import           XMonad.Util.WindowProperties   ( Property(..) )
 import           XMonad.Actions.RotSlaves       (rotSlavesUp,rotSlavesDown)
-import qualified XMonad.Actions.TopicSpace as TS (currentTopicDir,defaultTopicConfig,Dir,Topic,TopicConfig(..))
+import qualified XMonad.Actions.TopicSpace as TS (currentTopicDir,def,Dir,Topic,TopicConfig(..))
 import           XMonad.Actions.TopicSpace      ( (>*>) )
 
 import           XMonad.Actions.TopicDefinitions
@@ -53,7 +53,7 @@ myTopicActions  = topicActions myTopicDefs      :: M.Map TS.Topic (X())
 wsGo = goToSelectedWS myTopicConfig
 
 myTopicConfig :: TS.TopicConfig
-myTopicConfig = TS.defaultTopicConfig
+myTopicConfig = TS.def
   { TS.topicDirs           = myTopicDirs
   , TS.defaultTopicAction  = const $ return ()
   , TS.defaultTopic        = myDefaultTopic

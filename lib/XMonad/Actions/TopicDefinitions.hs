@@ -36,13 +36,13 @@ import XMonad.Layout.LayoutCombinators (NewSelect(..))
 
 import qualified XMonad.Actions.TopicSpace as TS(Dir,Topic,TopicConfig(..)
                                                 ,switchTopic,topicAction
-                                                ,checkTopicConfig,defaultTopicConfig)
+                                                ,checkTopicConfig,def)
 -- Utilities
 import           Control.Monad                  (liftM2)
 import qualified Data.Map as M                  (fromList,Map(..))
 import           Data.List                      (sortBy,isSuffixOf)
 import           Data.Char                      (isDigit)
-import           Data.Monoid                    (mempty, mappend, All(..))
+import           Data.Monoid                    (mempty, mconcat, mappend, All(..))
 import           Graphics.X11.Types             (KeySym(..), ButtonMask(..))
 import           System.Directory               (getHomeDirectory)
 import           System.IO                      (FilePath)
@@ -183,7 +183,7 @@ topicActions :: TopicDefinitions -> M.Map TS.Topic (X())
 topicActions tds = M.fromList $ map (\x -> (tdName x, tdAction x)) tds
 
 topicSpaceConf :: TDConfig -> TopicDefinitions -> TS.TopicConfig
-topicSpaceConf tdc tds = TS.defaultTopicConfig
+topicSpaceConf tdc tds = TS.def
   { TS.topicDirs            = topicDirs tds
   , TS.defaultTopicAction   = tdcDefultAction tdc
   , TS.defaultTopic         = head $ topics tds

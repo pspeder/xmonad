@@ -64,7 +64,7 @@ import           XMonad.Config.Psp.Topics           ( myTopics, myTopicConfig )
 import           XMonad.Config.Psp.Keys
 import           XMonad.Config.Psp.LogHook
 --import           XMonad.Config.Psp.Configs          ( pspProgs )
-import           XMonad.Config.Psp.Layouts          ( myTopicLayoutHook )
+import           XMonad.Config.Psp.Layouts          ( myTopicLayoutHook, myStandardLayout )
 import           XMonad.Actions.TopicDefinitions  --( TopicDefinition(..),TopicDefinition, topicStartupHook )
 
 spawn' :: String -> X()
@@ -99,7 +99,7 @@ pspConfig d =
                           setDefaultCursor xC_left_ptr  <+>
                           setWMName "LG3D"              <+>
                           adjustEventInput              <+>
-                          topicStartupHook pspTDConfig pspTopicDefs pspProgs --pspProgs -- Progs should probably be defined in this file also (named pspProgs probably)
+                          topicStartupHook pspTDConfig pspTopicDefs pspProgs
     , handleEventHook   = ewmhDesktopsEventHook         <+>
                           focusOnMouseMove              <+>
                           fullscreenEventHook           <+>
@@ -110,7 +110,7 @@ pspConfig d =
                           manageDocks                   <+>
                           pspNamedScratchpadManageHook  <+>
                           topicManageHook pspTopicDefs
-                                          [(ClassName "Gimp")]     -- ts
+                                          []     -- ts
                                           []                       -- fs
                                           [(ClassName "Skype" `And`
                                             Title "Options")]      -- cfs
