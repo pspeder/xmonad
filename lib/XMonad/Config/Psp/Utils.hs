@@ -116,7 +116,7 @@ nonEmptyWS :: WindowSpace -> Bool
 nonEmptyWS = (/= Nothing) . W.stack
 
 -- | From: https://github.com/br0ns/config/blob/master/xmonad-lib/XMonad/Layout/TopicExtra.hs
--- Includes empty window spaces if {True}
+-- Includes empty window spaces if first arg is {True}
 gridselectWS :: Bool -> GSConfig WindowSpace -> X (Maybe WindowSpace)
 gridselectWS inclEmpty conf =
   withWindowSet $ \ws -> do

@@ -30,7 +30,7 @@ myScratches =
          , hook  = nonFloating
          }
     , NS { name  = "notes"
-         , cmd   = "gvim -name 'scratchnotepad' --role 'scratchnotepad' -n ~/notes/note.md"
+         , cmd   = "qvm-run -a devel 'gvim -name 'scratchnotepad' --role 'scratchnotepad' -n ~/notes/note.md'"
          , query = wmrole =? "scratchnotepad"
          , hook  = popOut L (1/3)
          }

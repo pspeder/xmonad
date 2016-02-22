@@ -17,6 +17,7 @@ import           Graphics.X11.Xlib.Types (Dimension)
 import           Data.List (isPrefixOf)
 import qualified Data.Map as M (Map(..),fromList,mapKeys)
 import           XMonad.Prompt (XPConfig(..)
+                               ,defaultXPConfig
                                ,defaultXPKeymap
                                ,XPPosition(..))
 import XMonad.Hooks.DynamicLog
@@ -80,28 +81,28 @@ myXPConfig = defaultXPConfig
     , historySize       = 256
     }
 
-defaultXPConfig =
-    XPC { font              = "-misc-fixed-*-*-*-*-12-*-*-*-*-*-*-*"
-        , bgColor           = "grey22"
-        , fgColor           = "grey80"
-        , fgHLight          = "black"
-        , bgHLight          = "grey"
-        , borderColor       = "white"
-        , promptBorderWidth = 1
-        , promptKeymap      = defaultXPKeymap
-        , completionKey     = xK_Tab
-        , maxComplRows      = Just 10
-        , changeModeKey     = xK_grave
-        , position          = Bottom
-        , height            = 18
-        , historySize       = 256
-        , historyFilter     = id
-        , defaultText       = []
-        , autoComplete      = Nothing
-        , showCompletionOnTab = False
-        , searchPredicate   = isPrefixOf
-        , alwaysHighlight   = False
-        }
+--defaultXPConfig =
+--    XPC { font              = "-misc-fixed-*-*-*-*-12-*-*-*-*-*-*-*"
+--        , bgColor           = "grey22"
+--        , fgColor           = "grey80"
+--        , fgHLight          = "black"
+--        , bgHLight          = "grey"
+--        , borderColor       = "white"
+--        , promptBorderWidth = 1
+--        , promptKeymap      = defaultXPKeymap
+--        , completionKey     = xK_Tab
+--        , maxComplRows      = Just 10
+--        , changeModeKey     = xK_grave
+--        , position          = Bottom
+--        , height            = 18
+--        , historySize       = 256
+--        , historyFilter     = id
+--        , defaultText       = []
+--        , autoComplete      = Nothing
+--        , showCompletionOnTab = False
+--        , searchPredicate   = isPrefixOf
+--        , alwaysHighlight   = False
+--        }
 
 -- GridSelect color scheme
 myColorizer :: Window -> Bool -> X (String, String)

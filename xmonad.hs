@@ -9,6 +9,5 @@ import System.Process
 main :: IO()
 main = do
     replace -- instruct current (if any) window manager to exit
-    d <- spawnPipe "dzen2 -p -ta l -e 'onstart=lower'"
-    xmonad $ pspConfig d
+    xmonad $ pspConfig
 

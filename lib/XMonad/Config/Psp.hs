@@ -21,6 +21,7 @@ import           XMonad                             ( defaultConfig         -- T
                                                     , XConfig(..)
                                                     , spawn
                                                     , X(..) )
+import           XMonad.Config.Kde                  ( kde4Config )          -- For qubes
 import           XMonad.Util.WindowProperties       ( Property(..) )        -- Classes to handle window properties
 import           XMonad.Util.Cursor                 ( setDefaultCursor )    -- Does what function name suggests
 import           XMonad.Hooks.SetWMName             ( setWMName )           -- From documentation: "May be useful for making Java GUI programs work..."
@@ -82,18 +83,18 @@ spawnShellIn dir = spawnIn "/bin/zsh" dir
 
 -- | Spawn app from certain dir (gvim)
 spawnIn :: String -> String -> X()
-spawnIn app dir = spawn $ "cd " ++ dir ++ " && urxvtc -e " ++ app
+spawnIn app dir = spawn $ "cd " ++ dir ++ " && konsole -e " ++ app
 
-pspConfig d =
+pspConfig =
     withUrgencyHookC LibNotifyUrgencyHook
                      urgencyConfig { suppressWhen = OnScreen
                                    , remindWhen   = Repeatedly 5 90 }
   . withUrgencyHook  NoUrgencyHook
   . ewmh
   . addRemoveKeysP
-  $ defaultConfig
+  $ kde4Config
     { modMask           = mod4Mask
-    , terminal          = "urxvtcd"
+    , terminal          = "konsole"
     , workspaces        = topics pspTopicDefs
     , startupHook       = ewmhDesktopsStartup           <+>
                           setDefaultCursor xC_left_ptr  <+>
@@ -110,7 +111,7 @@ pspConfig d =
                           manageDocks                   <+>
                           pspNamedScratchpadManageHook  <+>
                           topicManageHook pspTopicDefs
-                                          []     -- ts
+                                          [(ClassName "Qubes-manager")]     -- ts
                                           []                       -- fs
                                           [(ClassName "Skype" `And`
                                             Title "Options")]      -- cfs
@@ -118,10 +119,10 @@ pspConfig d =
                                           []                       -- is
                                           []                       -- mss
     , layoutHook        = myTopicLayoutHook
-    , logHook           = logHook defaultConfig >>
-                          currentWorkspaceOnTop >>
-                          ewmhDesktopsLogHook   >>
-                          pspLogHook d
+    --, logHook           = logHook defaultConfig >>
+    --                      currentWorkspaceOnTop >>
+    --                      ewmhDesktopsLogHook   >>
+    --                      pspLogHook d
     }
 
 pspTDConfig = TDConfig
@@ -137,7 +138,7 @@ pspTDConfig = TDConfig
 pspProgs = ProgSetup
     { taHomeDir     = "/home/psp"
     , taDefaultDir  = "/home/psp"
-    , taTerminal    = "urxvtcd"
+    , taTerminal    = "konsole"
     , taPDF         = "mupdf"
     , taMail        = "mutt"
     , taMailCalendar= "thunderbird"
@@ -161,7 +162,15 @@ pspTopicDefs =
   [ -- This holds information about the Topic/workspace 1:main
     -- Initialise a new TopicDefinition record from scratch - you must then
     -- specify each record field with desired value(s).
-    TopicDefinition
+    defaultTopicDefinition
+        { tdName            = "QVMM"
+        , tdBoundApps       = [ClassName "Qubes-manager"]
+        , tdMenuApps        =
+            [ ("Terminal", taTerminal pspProgs)
+            --, ("Run in", spawnInVM name )
+            ]
+        }
+  , TopicDefinition
         { tdName            = "1:main"  -- @XMonad.StackSet.Workspace@'s name
         , tdAction          = -- X () action to spawn when workspace is chosen
                               spawnShell >*> 2
