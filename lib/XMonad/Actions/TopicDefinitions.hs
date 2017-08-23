@@ -49,7 +49,7 @@ import           System.IO                      (FilePath)
 
 import qualified XMonad.StackSet as W           (focusDown,greedyView,shift,shiftMaster,sink,view,Workspace(..))
 import           XMonad.Actions.DynamicWorkspaces(addHiddenWorkspace)
-import           XMonad.Layout.PerWorkspace     (onWorkspace)
+import           XMonad.Layout.PerWorkspace
 import           XMonad.Util.WindowProperties   (Property(..),propertyToQuery)
 -- Hooks
 import           XMonad.ManageHook
@@ -62,6 +62,11 @@ import           XMonad.Config.Psp.Utils (spawnSelected',changeDir)
 
 -- | A wrapper type to allow the use of both EZConfig keys as well as keys with types from Xlib
 data Key = EZKey String | XKey (KeyMask, KeySym)
+-- TODO rewrite to something like
+
+--data Layout a = forall l. (LayoutClass l a, Read (l a)) => Layout (l a)
+
+data AnyLayout a = forall l. (LayoutClass l a) => AnyLayout (l a)
 
 -- | A TopicDefinition holds information regarding a workspace/topic/desktop.
 -- Possible TODO :
@@ -79,6 +84,7 @@ data TopicDefinition = TopicDefinition
     , tdBoundApps      :: [Property]           -- ^ XProperties to tie in ManageHook
     , tdMenuApps       :: [(String, String)]   -- ^ Pretty name and exec string for 2D menu
     , tdKeyBindings    :: [(String, X())]      -- ^ Keys that should enabled on ws list of (key, app)s
+    --, tdLayout :: AnyLayout m
     }
 -- | A list of type TopicDefinition
 type TopicDefinitions = [TopicDefinition]
@@ -156,18 +162,21 @@ defaultTopicDefinition = TopicDefinition
     , tdMenuApps       = [("Terminal", "urxvtc")]
     , tdBoundApps      = []
     , tdKeyBindings    = []
+    --, tdLayout         = AnyLayout Full
     }
 
 -- Exported Functions
 ---------------------
 -- | List of topic names
 topics :: TopicDefinitions -> [TS.Topic]
-topics = map (tdName)
+topics = map tdName
 
--- |Transforms TopicDefinitions into a list containing only the
+-- | Transforms TopicDefinitions into a list containing only the
 -- topics starting with a number ranging 1-9
 numberedTopics :: TopicDefinitions -> [TS.Topic]
-numberedTopics tds = foldr (\n acc -> if isDigit $ head n then n:acc else acc) [[]] $ topics tds
+numberedTopics tds = foldr (\n acc -> if isDigit $ head n
+                                      then n:acc
+                                      else acc) [[]] $ topics tds
 
 -- | Map, tying together topic names with their directories
 --  (for use in TopicConfig)
@@ -205,7 +214,7 @@ topicStartupHook tc tds ps = catchIO (TS.checkTopicConfig (topics tds) (topicSpa
                             mconcat (taStartup ps)
 
 -- | ManageHook -- compile a manage hook from the following:
-topicManageHook :: TopicDefinitions    -- ^ tds : TopicDefinitions to bind appropriate apps
+topicManageHook :: TopicDefinitions -- ^ tds : TopicDefinitions to bind appropriate apps
              -> [Property]          -- ^ ts  : list of window properties to be forced into tiling
              -> [Property]          -- ^ fs  : list of window properties to float by standard floating algorithm
              -> [Property]          -- ^ cfs : list of window properties to force into centered floats
@@ -221,10 +230,11 @@ topicManageHook tds ts fs cfs ffs is mss =
     , [ propertyToQuery cfs'--> doCenterFloat | cfs' <- cfs ]
     , [ propertyToQuery ffs'--> doMyFFloat    | ffs' <- ffs ]
     , [ propertyToQuery is' --> doIgnore      | is'  <- is  ]
-    ]) <+> vboxHook <+> (composeOne
-    [ isFullscreen -?> doFullFloat
-    , isDialog     -?> doCenterFloat
-    , return True  -?> doMaster      -- prevent new windows from stealing focus
+    ]) <+> vboxHook <+> kdeHook <+> (composeAll -- was composeOne
+    [ isFullscreen --> doFullFloat
+    , isDialog     --> doCenterFloat
+    -- Below is NOT feasible in QubesOS ... Don't override my classnames, plx!
+    --, return True  -?> doMaster      -- prevent new windows from stealing focus
     ]) where
         doTile          = (ask >>= doF . W.sink)
         doMaster        = (doF W.shiftMaster)
@@ -240,6 +250,9 @@ topicManageHook tds ts fs cfs ffs is mss =
                            liftX $ addHiddenWorkspace ws
                            doViewShift ws
                    else return mempty
+        kdeHook         = composeAll . map (\n -> className =? n --> doFloat) $ kdeApps
+            where kdeApps = ["plasma", "Plasma", "plasma-desktop", "Plasma-desktop", "krunner", "plasmashell",
+                             "ksplashsimple", "ksplashqml", "ksplashx"]
 
 -- | A list of keybindings related to topics
 topicEZKeys :: TopicDefinitions -> TS.TopicConfig -> [(String, X())] -> [(String, X ())]
@@ -268,7 +281,7 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
                                                        then shrinkAndBind ((k1,nas1++nas2):acc)            ks'
                                                        else shrinkAndBind       ((k1,nas1):acc) ((k2,nas2):ks')
 
-        -- | Manipulate a list of 'TopicDefinition' into a sorted list of tuples with el. 1 being key and el. 2 being tuples for X.A.BindOn
+        -- | Manipulate a list of 'TopicDefinition' into a sorted list of tuples with el. 1 being key and el. 2 being a list of tuples for X.A.BindOn
         sortedTopicAppsKeys :: [( String, [(TS.Topic, X())] )]
         sortedTopicAppsKeys =
             let -- | Determines if first argument is lexigraphically smaller than the second.
@@ -290,8 +303,6 @@ topicEZKeys tds tc ks = ( ("M-m", bindOn topicsApps):(topicShifts ++ (shrinkAndB
 
             in sortKeys $ keyBindings ++ concat (foldr (\TopicDefinition {tdName=n, tdKeyBindings=ks'} acc
                                             -> (map (\(k,a) -> (k, [(n,a)])) ks'):acc) [] tds)
-
-
 
 
 

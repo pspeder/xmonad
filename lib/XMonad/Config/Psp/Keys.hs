@@ -43,10 +43,10 @@ keysToRemove :: [String]
 keysToRemove = [ "M-<Space>"       -- Originally layout toggle
                , "M-S-<Space>"     --
                , "M-m"
-               , "M-w"             -- First screen
-               , "M-S-w"           -- Move to first screen
-               , "M-e"             -- Second screen
-               , "M-S-e"           -- Move to second screen
+               --, "M-w"             -- First screen
+               --, "M-S-w"           -- Move to first screen
+               --, "M-e"             -- Second screen
+               --, "M-S-e"           -- Move to second screen
                , "M-r"             -- Third screen
                , "M-S-r"           -- Move to Third screen
                , "M-p"             -- Run program with dmenu
@@ -76,7 +76,7 @@ keysToAdd = myTopicKeys (
         , ("M-S-r"                  , restart "xmonad" True                     )
         , ("M-<Tab>"                , rotAllUp                                  )
         , ("M-S-<Tab>"              , rotAllDown                                )
-        , ("M-w"                    , wsGo True myGSConfig                      )
+        , ("M-g"                    , wsGo True myGSConfig                      )
         , ("M-y"                    , keysCommands >>= runCommand               )
         , ("M-S-l"                  , sendMessage NextLayout                    )
         , ("M-f"                    , withFocused $ sendMessage.maximizeRestore ) -- make window full screen

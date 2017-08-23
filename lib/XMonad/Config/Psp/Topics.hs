@@ -59,7 +59,7 @@ myTopicConfig = TS.def
   , TS.defaultTopic        = myDefaultTopic
   , TS.topicActions        = myTopicActions
   }
-myTopicDefs :: TopicDefinitions
+--myTopicDefs :: TopicDefinitions l
 myTopicDefs =
   [
     TopicDefinition
@@ -78,7 +78,7 @@ myTopicDefs =
                               , ("Editor"    , taEditor progs  ) ]
         , tdKeyBindings     = -- KeyBindings that are bound to this workspace
                               [ ("M-z", spawnShell ) ]
-        -- , tdBoundLayout     = myStandardLayout
+        --, tdLayout          = myStandardLayout l
                                 -- Possibly @ModifiedLayout a l@, unsure of actual type, though
         --                      -- For now just make a custom a one.
         --                      -- See LayoutHook in xmonad.hs or compose one (possibly with
